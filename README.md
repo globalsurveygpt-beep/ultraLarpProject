@@ -34,14 +34,21 @@ The calculation is deterministic and reproducible. It uses no AI and no estimate
 4. **API:** a thin FastAPI layer between the core and the interface.
 5. **Interface:** a flat polar map, a calendar, charts and comparison view.
 
-Sun and Earth positions are computed locally with Skyfield, so the demo works without internet access.
+The demo is hosted on our own server. Terrain and ephemeris files are stored on the server disk, and Sun and Earth positions are computed there with Skyfield. The calculation does not call any external API.
 
 ## Data
 
 | Dataset | Use | Source |
 |---|---|---|
-| LOLA lunar elevation, south polar region | Terrain and horizon | _TODO: exact product, resolution and link_ |
-| JPL ephemerides DE440 (`de440s.bsp`) | Sun and Earth positions | _TODO: link_ |
+| LOLA south pole elevation model, 80 m per pixel (`LDEM_80S_80MPP_ADJ.TIF`), NASA GSFC PGDA product 90 | Terrain and horizon | [pgda.gsfc.nasa.gov/products/90](https://pgda.gsfc.nasa.gov/products/90) |
+| JPL planetary ephemeris DE440 (`de440s.bsp`) | Sun, Earth and Moon positions | [NAIF generic kernels, spk/planets](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/) |
+| Lunar orientation for DE440 (`moon_pa_de440_200625.bpc`) | Orientation of the Moon | [NAIF generic kernels, pck](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/) |
+| Lunar frame kernel (`moon_de440_250416.tf`) | Reference frame that matches the terrain data | [NAIF generic kernels, fk/satellites](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/fk/satellites/) |
+| Planetary constants (`pck00011.tpc`) | Radius of the Moon | [NAIF generic kernels, pck](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/) |
+
+The terrain data is described in Barker et al. (2023), [doi:10.3847/PSJ/acf3e1](https://doi.org/10.3847/PSJ/acf3e1).
+
+The data files are not stored in this repository (about 235 MB in total). They are downloaded separately into the `data/` folder.
 
 Any synthetic or placeholder data is labelled as such in the code and in the interface.
 
@@ -51,7 +58,7 @@ The tool shows allowed landing windows based on illumination and Earth visibilit
 
 ## Run locally
 
-_TODO: setup, data download and start instructions._
+_TODO: setup, data download and start instructions. They will be added together with the data download script._
 
 ## Tech stack
 
