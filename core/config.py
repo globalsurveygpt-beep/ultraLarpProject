@@ -5,6 +5,7 @@ Calculation parameters below were approved by the project lead on 2026-11-14
 """
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -35,3 +36,8 @@ AZIMUTH_STEP_DEG = 0.5
 # Time series.
 TIME_STEP_H = 1.0
 TRANSITION_PRECISION_MIN = 1.0
+
+# Supported dates: 2000 to 2050 inclusive, UTC. The data files cover more
+# (de440s.bsp 1849-2150, lunar orientation 1550-2650); this is the product range.
+DATE_MIN_UTC = datetime(2000, 1, 1, tzinfo=timezone.utc)
+DATE_END_UTC = datetime(2051, 1, 1, tzinfo=timezone.utc)  # exclusive

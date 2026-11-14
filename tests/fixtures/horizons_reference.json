@@ -1,0 +1,500 @@
+{
+ "source": "JPL Horizons API, https://ssd.jpl.nasa.gov/api/horizons.api",
+ "fetched_utc": "2026-11-14T15:47:00Z",
+ "horizons_ephemeris": [
+  "DE441"
+ ],
+ "settings": {
+  "center": "coord@301 (Moon), geodetic site coordinates, altitude 0 km on the 1737.4 km sphere",
+  "quantities": "4: apparent azimuth (from north through east) and elevation, airless",
+  "time_scale": "UTC"
+ },
+ "rows": [
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 248.272962,
+   "el_deg": -0.815049
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 245.229947,
+   "el_deg": -0.834781
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 242.186572,
+   "el_deg": -0.853961
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 126.627333,
+   "el_deg": 1.258335
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 123.580728,
+   "el_deg": 1.280122
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 120.534441,
+   "el_deg": 1.30262
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 237.844796,
+   "el_deg": 0.629222
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 234.785374,
+   "el_deg": 0.61351
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 231.725608,
+   "el_deg": 0.59858
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 5.570082,
+   "el_deg": 7.047261
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 5.304184,
+   "el_deg": 7.019385
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 5.027806,
+   "el_deg": 6.972872
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 358.773423,
+   "el_deg": -4.148545
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 358.426512,
+   "el_deg": -3.890705
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 358.078065,
+   "el_deg": -3.621837
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 4.247897,
+   "el_deg": 2.480079
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 4.364853,
+   "el_deg": 2.096583
+  },
+  {
+   "site": "near_pole",
+   "lat_deg": -89.5,
+   "lon_deg": 0.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 4.469493,
+   "el_deg": 1.707739
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 158.187802,
+   "el_deg": -4.809213
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 155.136134,
+   "el_deg": -4.709981
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 152.084982,
+   "el_deg": -4.599242
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 36.775507,
+   "el_deg": 5.165429
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 33.71995,
+   "el_deg": 5.303419
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 30.663611,
+   "el_deg": 5.430724
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 147.808219,
+   "el_deg": -2.914341
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 144.74836,
+   "el_deg": -2.77459
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 141.689023,
+   "el_deg": -2.624394
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 275.013344,
+   "el_deg": 6.964578
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 274.750616,
+   "el_deg": 6.915797
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 274.478945,
+   "el_deg": 6.847615
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 269.122577,
+   "el_deg": -4.73093
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 268.75618,
+   "el_deg": -4.501043
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 268.387414,
+   "el_deg": -4.26026
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 274.057379,
+   "el_deg": 2.307385
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 274.204293,
+   "el_deg": 1.934319
+  },
+  {
+   "site": "zone_edge",
+   "lat_deg": -85.5,
+   "lon_deg": 90.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 274.339346,
+   "el_deg": 1.554952
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 8.273553,
+   "el_deg": 2.338884
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 5.228315,
+   "el_deg": 2.362267
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 2.182639,
+   "el_deg": 2.377186
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 246.571261,
+   "el_deg": 0.364661
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 243.528717,
+   "el_deg": 0.220126
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 240.486368,
+   "el_deg": 0.079312
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 357.845721,
+   "el_deg": 3.893197
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 354.779368,
+   "el_deg": 3.889402
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "sun",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 351.712717,
+   "el_deg": 3.877035
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T00:00:00Z",
+   "az_deg": 125.816831,
+   "el_deg": 4.798128
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T06:00:00Z",
+   "az_deg": 125.551092,
+   "el_deg": 4.781359
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2000-01-01T12:00:00Z",
+   "az_deg": 125.274126,
+   "el_deg": 4.746461
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T00:00:00Z",
+   "az_deg": 118.536572,
+   "el_deg": -6.086532
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T06:00:00Z",
+   "az_deg": 118.201092,
+   "el_deg": -5.812954
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2026-11-14T12:00:00Z",
+   "az_deg": 117.864701,
+   "el_deg": -5.528224
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T00:00:00Z",
+   "az_deg": 124.306925,
+   "el_deg": 0.291378
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T06:00:00Z",
+   "az_deg": 124.407315,
+   "el_deg": -0.096677
+  },
+  {
+   "site": "west",
+   "lat_deg": -87.0,
+   "lon_deg": -120.0,
+   "body": "earth",
+   "time_utc": "2050-06-15T12:00:00Z",
+   "az_deg": 124.495241,
+   "el_deg": -0.489544
+  }
+ ]
+}
