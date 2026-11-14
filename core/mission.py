@@ -17,12 +17,12 @@ from dataclasses import asdict, dataclass, fields
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from core import config
+from core import config, visibility
 from core.datasets import by_key
 from core.ephemeris import DirectionSource, check_times
 from core.horizon import horizon
 from core.terrain import InsufficientData, Terrain
-from core.visibility import Interval, WindowResult, window
+from core.visibility import Interval, WindowResult, window, window_from_vectors, window_times
 
 # Defaults are an example setup, not a recommendation; the interface labels them so.
 EXAMPLE_NOTE = "Example setup, not a recommendation."
@@ -233,6 +233,7 @@ def assess_site(terrain: Terrain, source: DirectionSource, lat_deg: float, lon_d
     """
     if not isinstance(profile, MissionProfile):
         profile = MissionProfile.from_dict(profile)
+    check_site(lat_deg, lon_deg)
     check_times([start_utc, start_utc + timedelta(days=profile.duration_days) - timedelta(minutes=1)])
     try:
         prof = horizon(terrain, lat_deg, lon_deg, profile.observer_height_m, folder=cache_folder)
@@ -240,3 +241,140 @@ def assess_site(terrain: Terrain, source: DirectionSource, lat_deg: float, lon_d
         return build_response(lat_deg, lon_deg, start_utc, profile, None, None, terrain.path.name)
     result = window(source, prof, start_utc, profile.duration_days)
     return build_response(lat_deg, lon_deg, start_utc, profile, result, prof.site_height_m, terrain.path.name)
+
+
+def assess_sites(terrain: Terrain, source: DirectionSource, sites: list[tuple[float, float]],
+                 start_utc: datetime, profile: MissionProfile | dict | None = None,
+                 cache_folder: Path | None = None) -> list[dict]:
+    """assess_site for several sites on one window: the body vectors, which do not
+    depend on the site, are computed once. Results keep the order of `sites`."""
+    if not isinstance(profile, MissionProfile):
+        profile = MissionProfile.from_dict(profile)
+    for lat, lon in sites:
+        check_site(lat, lon)
+    times = window_times(start_utc, profile.duration_days)
+    vectors = None
+    out = []
+    for lat, lon in sites:
+        try:
+            prof = horizon(terrain, lat, lon, profile.observer_height_m, folder=cache_folder)
+        except InsufficientData:
+            out.append(build_response(lat, lon, start_utc, profile, None, None, terrain.path.name))
+            continue
+        if vectors is None:
+            vectors = source.vectors_km(times)
+        result = window_from_vectors(vectors, prof, start_utc)
+        out.append(build_response(lat, lon, start_utc, profile, result, prof.site_height_m, terrain.path.name))
+    return out
+
+
+# ---------- single moment and one-day series (format approved 2026-11-14) ----------
+
+ANGLE_DECIMALS = 3
+
+
+def check_site(lat_deg: float, lon_deg: float) -> None:
+    if not -90.0 <= lat_deg <= 90.0:
+        raise ProfileError("lat_deg", f"must be between -90 and 90, got {lat_deg:g}")
+    if not -180.0 <= lon_deg <= 180.0:
+        raise ProfileError("lon_deg", f"must be between -180 and 180, got {lon_deg:g}")
+
+
+def _check_height(observer_height_m: float) -> None:
+    MissionProfile(observer_height_m=float(observer_height_m)).validate()
+
+
+def _site(lat_deg, lon_deg, height_m):
+    return {"lat_deg": _num(lat_deg), "lon_deg": _num(lon_deg),
+            "height_m": None if height_m is None else _num(height_m, 1)}
+
+
+def _deg(x) -> float | int:
+    return _num(x, ANGLE_DECIMALS)
+
+
+def instant_response(terrain: Terrain, source: DirectionSource, lat_deg: float, lon_deg: float,
+                     time_utc: datetime, observer_height_m: float = 0.0,
+                     cache_folder: Path | None = None) -> dict:
+    check_site(lat_deg, lon_deg)
+    _check_height(observer_height_m)
+    check_times([time_utc])
+    response = {"data_status": "insufficient_data", "site": _site(lat_deg, lon_deg, None),
+                "time_utc": _iso(time_utc), "sun": None, "earth": None, "meta": {"model": MODEL}}
+    try:
+        prof = horizon(terrain, lat_deg, lon_deg, observer_height_m, folder=cache_folder)
+    except InsufficientData:
+        return response
+    state = visibility.instant(source, prof, time_utc)
+    response.update({"data_status": "ok", "site": _site(lat_deg, lon_deg, prof.site_height_m)})
+    for body, s in state.items():
+        response[body] = {"alt_deg": _deg(s.alt_deg), "az_deg": _deg(s.az_deg), "horizon_deg": _deg(s.horizon_deg),
+                          "margin_deg": _deg(s.margin_deg), "visible": s.visible}
+    return response
+
+
+def day_series_response(terrain: Terrain, source: DirectionSource, lat_deg: float, lon_deg: float,
+                        day_start_utc: datetime, observer_height_m: float = 0.0,
+                        cache_folder: Path | None = None) -> dict:
+    check_site(lat_deg, lon_deg)
+    _check_height(observer_height_m)
+    check_times([day_start_utc, day_start_utc + timedelta(days=1)])
+    response = {"data_status": "insufficient_data", "site": _site(lat_deg, lon_deg, None),
+                "start_utc": _iso(day_start_utc), "step_min": _num(config.DAY_SERIES_STEP_MIN),
+                "times_utc": None, "sun": None, "earth": None}
+    try:
+        prof = horizon(terrain, lat_deg, lon_deg, observer_height_m, folder=cache_folder)
+    except InsufficientData:
+        return response
+    d = visibility.day_series(source, prof, day_start_utc)
+    response.update({"data_status": "ok", "site": _site(lat_deg, lon_deg, prof.site_height_m),
+                     "times_utc": [_iso(t) for t in d.times_utc]})
+    for body, b in (("sun", d.sun), ("earth", d.earth)):
+        response[body] = {
+            "alt_deg": [_deg(x) for x in b.alt_deg], "az_deg": [_deg(x) for x in b.az_deg],
+            "horizon_deg": [_deg(x) for x in b.horizon_deg], "margin_deg": [_deg(x) for x in b.margin_deg],
+            "visible": [bool(x) for x in b.visible],
+        }
+    return response
+
+
+# ---------- metadata (format approved 2026-11-14) ----------
+
+PROFILE_FIELDS = (
+    ("duration_days", "days", lambda: config.WINDOW_DAYS_MIN, lambda: config.WINDOW_DAYS_MAX),
+    ("vehicle_type", "text", lambda: None, lambda: None),
+    ("max_night_h", "h", lambda: 0.0, lambda: "window length"),
+    ("max_comms_gap_h", "h", lambda: 0.0, lambda: "window length"),
+    ("min_sun_pct", "pct", lambda: 0.0, lambda: 100.0),
+    ("observer_height_m", "m", lambda: 0.0, lambda: OBSERVER_HEIGHT_MAX_M),
+)
+
+
+def meta_response(data_present: bool, missing: list[str]) -> dict:
+    import numpy as np
+
+    defaults = MissionProfile()
+    zone_lat = -90.0 + np.degrees(config.WORKING_ZONE_RADIUS_M / config.MOON_RADIUS_M)
+    fields_out = []
+    for key, unit, lo, hi in PROFILE_FIELDS:
+        entry = {"key": key, "unit": unit, "default": getattr(defaults, key)}
+        if unit == "text":
+            entry["max_length"] = VEHICLE_TYPE_MAX_LEN
+        else:
+            entry["default"] = _num(entry["default"])
+            entry["min"], entry["max"] = _num(lo()), (hi() if isinstance(hi(), str) else _num(hi()))
+        fields_out.append(entry)
+    return {
+        "zone": {"max_distance_from_pole_km": _num(config.WORKING_ZONE_RADIUS_M / 1000),
+                 "min_lat_deg": _num(zone_lat, 2)},
+        "dates": {"min_utc": _iso(config.DATE_MIN_UTC),
+                  "max_utc": _iso(config.DATE_END_UTC - timedelta(minutes=1))},
+        "window_days": {"min": _num(config.WINDOW_DAYS_MIN), "max": _num(config.WINDOW_DAYS_MAX)},
+        "profile_fields": fields_out,
+        "example_note": EXAMPLE_NOTE,
+        "data": {"terrain": by_key("terrain").filename, "ephemeris": by_key("ephemeris").filename,
+                 "present": bool(data_present), "missing": list(missing)},
+        "model": MODEL,
+        "horizon_radius_km": _num(config.HORIZON_RADIUS_M / 1000),
+        "time_step_min": _num(config.TIME_STEP_MIN),
+    }

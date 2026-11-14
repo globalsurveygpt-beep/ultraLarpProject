@@ -31,6 +31,9 @@ LUNAR_FRAME = "MOON_ME_DE440_ME421"
 
 # Horizon calculation.
 HORIZON_RADIUS_M = 150_000.0
+# Working zone: sites up to this distance from the pole. With the LOLA 80 m raster
+# (+-304 km) and a 150 km horizon this is the farthest site whose circle fits.
+WORKING_ZONE_RADIUS_M = 154_000.0
 AZIMUTH_STEP_DEG = 0.5
 
 # Time series. Visibility is evaluated on a continuous 1-minute grid: an hourly grid
