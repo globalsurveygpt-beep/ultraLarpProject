@@ -1,0 +1,5 @@
+numpy==2.5.4
+rasterio==1.5.2
+skyfield==1.55
+fastapi==0.162.5
+uvicorn==0.54.0
