@@ -1,4 +1,6 @@
-# Project name (TBD)
+# LUCY
+
+**L**unar **U**ptime **C**alculator for **Y**our mission
 
 Pick a point near the lunar south pole and a date, and see whether a lander could operate there: is the Sun above the local horizon for the batteries, and is Earth visible for communication?
 

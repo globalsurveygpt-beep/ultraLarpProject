@@ -11,6 +11,7 @@ Endpoints:
     GET  /api/day-series?lat=&lon=&date=&height=
     POST /api/window   {"lat_deg", "lon_deg", "start_utc", "profile"}
     POST /api/compare  {"sites": [{"lat_deg", "lon_deg"}, ...], "start_utc", "profile"}
+    POST /api/search   {"from_utc", "to_utc", "region", "profile"}
 
 Errors share one shape: {"error": {"field": ..., "message": ...}}.
 400 for bad input, 503 when the data files are not loaded. A site without enough
@@ -30,7 +31,7 @@ from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from core import config, mission
+from core import config, mission, search
 from core.datasets import DATASETS
 from core.mission import ProfileError
 
@@ -108,7 +109,7 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
             state["terrain"].close()
             state["terrain"] = None
 
-    app = FastAPI(title="Lunar landing window API", version="1.0", lifespan=lifespan)
+    app = FastAPI(title="LUCY API", version="1.0", lifespan=lifespan)
 
     @app.exception_handler(ApiError)
     async def api_error(request: Request, e: ApiError):
@@ -171,6 +172,19 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
         start = parse_time(body.get("start_utc"), "start_utc")
         profile = mission.MissionProfile.from_dict(_object(body, "profile"))
         return {"results": compute(mission.assess_sites, pairs, start, profile)}
+
+    @app.post("/api/search")
+    def inverse_search(body: dict = Body(...)):
+        start = parse_time(body.get("from_utc"), "from_utc")
+        end = parse_time(body.get("to_utc"), "to_utc")
+        region = body.get("region")
+        if region is not None and not isinstance(region, dict):
+            raise ApiError(400, "region", "must be an object")
+        profile = mission.MissionProfile.from_dict(_object(body, "profile"))
+        try:
+            return compute(search.run, start, end, profile, region)
+        except search.SearchUnavailable as e:
+            raise ApiError(503, None, str(e)) from None
 
     if WEB_DIR.is_dir():
         from fastapi.staticfiles import StaticFiles

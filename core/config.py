@@ -43,6 +43,15 @@ TIME_STEP_MIN = 1.0
 # Sampling of the one-day series used for charts.
 DAY_SERIES_STEP_MIN = 10.0
 
+# Inverse search (approved 2026-11-14): sites on a 5 km grid over the working zone,
+# start times screened every hour, the best candidates recomputed at 1 minute.
+SEARCH_GRID_STEP_M = 5_000.0
+SEARCH_START_STEP_H = 1.0
+SEARCH_MAX_PERIOD_DAYS = 90.0
+SEARCH_TOP = 10
+SEARCH_CANDIDATES = 30
+SEARCH_REGION_MAX_RADIUS_KM = 400.0
+
 # Allowed mission window length, days.
 WINDOW_DAYS_MIN = 1.0
 WINDOW_DAYS_MAX = 60.0
