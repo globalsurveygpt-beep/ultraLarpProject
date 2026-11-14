@@ -33,9 +33,16 @@ LUNAR_FRAME = "MOON_ME_DE440_ME421"
 HORIZON_RADIUS_M = 150_000.0
 AZIMUTH_STEP_DEG = 0.5
 
-# Time series.
-TIME_STEP_H = 1.0
-TRANSITION_PRECISION_MIN = 1.0
+# Time series. Visibility is evaluated on a continuous 1-minute grid: an hourly grid
+# misses events shorter than an hour (measured on LOLA: up to 13 such Sun events in
+# 90 days at one site), and those split nights. Approved 2026-11-14.
+TIME_STEP_MIN = 1.0
+# Sampling of the one-day series used for charts.
+DAY_SERIES_STEP_MIN = 10.0
+
+# Allowed mission window length, days.
+WINDOW_DAYS_MIN = 1.0
+WINDOW_DAYS_MAX = 60.0
 
 # Supported dates: 2000 to 2050 inclusive, UTC. The data files cover more
 # (de440s.bsp 1849-2150, lunar orientation 1550-2650); this is the product range.

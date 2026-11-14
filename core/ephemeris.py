@@ -57,7 +57,7 @@ def check_times(times_utc: Sequence[datetime]) -> None:
         )
 
 
-def time_grid(start_utc: datetime, end_utc: datetime, step_h: float = config.TIME_STEP_H) -> list[datetime]:
+def time_grid(start_utc: datetime, end_utc: datetime, step_h: float = 1.0) -> list[datetime]:
     """Times from start to end inclusive, `step_h` hours apart."""
     if end_utc < start_utc:
         raise ValueError("end is before start")
