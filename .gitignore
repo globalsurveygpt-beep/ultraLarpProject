@@ -2,6 +2,7 @@
 CLAUDE.md
 .claude/
 mockups/
+docs/
 
 # Large data (LOLA rasters, ephemerides, precomputed horizons)
 data/
