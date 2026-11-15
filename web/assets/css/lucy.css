@@ -578,6 +578,10 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 .s3d-key{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--body-color)}
 .s3d-tools{top:44px;right:10px;background:none;padding:0;display:flex;gap:6px;pointer-events:auto}
 .s3d-tools button{padding:5px 9px;font-size:10px;background:#111e}
+.s3d-modes{display:flex}.s3d-modes button{border-radius:0}.s3d-modes button+button{border-left:0}
+.s3d-modes button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.site3d[data-mode=overview] [data-look],.site3d[data-mode=overview] [data-for=observer],.site3d[data-mode=observer] [data-for=overview]{display:none}
+.site3d[data-mode=overview] .s3d-bodies i{display:none}
 .s3d-note{right:10px;bottom:62px;max-width:340px;color:#9a9a9a;font-size:9px;text-align:right}
 .s3d-status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--muted);background:#020203cc}
 .s3d-status[hidden]{display:none}
