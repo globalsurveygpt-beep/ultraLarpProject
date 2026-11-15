@@ -18,7 +18,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

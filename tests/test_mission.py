@@ -4,10 +4,9 @@ import itertools
 import json
 from datetime import datetime, timedelta
 
-import numpy as np
 import pytest
 
-from core import config, mission
+from core import mission
 from core.datasets import DATASETS, locate
 from core.ephemeris import utc
 from core.mission import MissionProfile, ProfileError

@@ -1,0 +1,15 @@
+{
+  "image": "basemap.jpg",
+  "projection": "south polar stereographic, sphere, true scale at the pole",
+  "sphere_radius_m": 1737400.0,
+  "half_size_m": 304000.0,
+  "pixels": 3800,
+  "pixel_m": 160.0,
+  "working_zone_m": 154000.0,
+  "terrain": "LDEM_80S_80MPP_ADJ.TIF",
+  "light": {
+    "azimuth_deg": 315.0,
+    "altitude_deg": 35.0,
+    "note": "display only, not the illumination of any date"
+  }
+}

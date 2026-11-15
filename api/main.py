@@ -9,7 +9,9 @@ Endpoints:
     GET  /api/meta
     GET  /api/instant?lat=&lon=&time=&height=
     GET  /api/day-series?lat=&lon=&date=&height=
+    GET  /api/terrain-patch?lat=&lon=&height=
     POST /api/window   {"lat_deg", "lon_deg", "start_utc", "profile"}
+    POST /api/next-window  {"lat_deg", "lon_deg", "from_utc", "profile"}
     POST /api/compare  {"sites": [{"lat_deg", "lon_deg"}, ...], "start_utc", "profile"}
     POST /api/search   {"from_utc", "to_utc", "region", "profile"}
 
@@ -33,7 +35,7 @@ from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from core import config, mission, search
+from core import config, mission, nextwin, patch, search
 from core.datasets import DATASETS, locate
 from core.mission import ProfileError
 
@@ -114,7 +116,9 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
             state["terrain"].close()
             state["terrain"] = None
 
-    app = FastAPI(title="LUCY API", version="1.0", lifespan=lifespan)
+    # No /docs, /redoc or /openapi.json: the interactive docs pages load scripts from a CDN, and the
+    # working path makes no external requests.
+    app = FastAPI(title="LUCY API", version="1.0", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.exception_handler(ApiError)
     async def api_error(request: Request, e: ApiError):
@@ -157,12 +161,23 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
     def day_series(lat: float, lon: float, date: str, height: float = 0.0):
         return compute(mission.day_series_response, lat, lon, parse_time(date, "date"), height)
 
+    @app.get("/api/terrain-patch")
+    def terrain_patch(lat: float, lon: float, height: float = 0.0):
+        return compute(patch.patch_response, lat, lon, height)
+
     @app.post("/api/window")
     def assess_window(body: dict = Body(...)):
         lat, lon = _number(body, "lat_deg"), _number(body, "lon_deg")
         start = parse_time(body.get("start_utc"), "start_utc")
         profile = mission.MissionProfile.from_dict(_object(body, "profile"))
         return compute(mission.assess_site, lat, lon, start, profile)
+
+    @app.post("/api/next-window")
+    def next_window(body: dict = Body(...)):
+        lat, lon = _number(body, "lat_deg"), _number(body, "lon_deg")
+        start = parse_time(body.get("from_utc"), "from_utc")
+        profile = mission.MissionProfile.from_dict(_object(body, "profile"))
+        return compute(nextwin.next_window, lat, lon, start, profile)
 
     @app.post("/api/compare")
     def compare(body: dict = Body(...)):

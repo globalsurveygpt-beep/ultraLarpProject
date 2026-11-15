@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="LUCY (Lunar Uptime &amp; Communication Yardstick): landing windows at the lunar south pole. Sunlight and direct Earth visibility from LOLA terrain and JPL DE440 ephemerides.">
+<title>LUCY | Lunar Uptime &amp; Communication Yardstick</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png">
+<link rel="stylesheet" href="assets/css/lucy.css">
+</head>
+<body>
+<header>
+<div class="header-brand"><a class="brand" href="index.html"><img src="assets/img/logo.png" alt="LUCY" width="90" height="28"></a><div class="product">Lunar Uptime &amp; Communication Yardstick</div></div>
+<nav aria-label="Primary navigation"><div class="nav-links">
+<button role="tab" id="tab-site" aria-selected="true" aria-controls="site-view" data-view="site">Site analysis</button>
+<a id="tab-compare" href="compare.html">Comparison <span id="pin-count" class="mono">[0/3]</span></a>
+<button role="tab" id="tab-search" aria-selected="false" aria-controls="search-view" data-view="search">Window search</button>
+</div></nav>
+<div class="header-tools"><span class="mode" id="data-state">Connecting…</span><button type="button" id="about">Method &amp; sources</button></div>
+</header>
+<div class="workspace-title"><div><h1 id="page-title">Landing window assessment</h1></div></div>
+
+<main>
+<div id="site-view" data-stale="false" role="tabpanel" aria-labelledby="tab-site">
+<section class="setup-stage" aria-label="Site and mission configuration"><div class="layout">
+
+<section class="panel map-panel">
+<div class="panel-head"><h2>Surface</h2></div>
+<div class="map-toolbar">
+<label><input type="checkbox" id="grid-toggle" checked> Reference grid</label>
+<label><input type="checkbox" id="labels-toggle" checked> Labels</label>
+<div class="view-switch" id="view-switch" role="group" aria-label="Surface view" hidden><button type="button" id="view-map" aria-pressed="true">Map</button><button type="button" id="view-3d" aria-pressed="false">Site view</button></div>
+<span class="mono">154 km working zone</span>
+</div>
+<div class="map-stage">
+<div class="map" id="map" tabindex="0" aria-label="South pole map. Click to place the site. Use the coordinate fields for exact values.">
+<div class="world" id="world">
+<img id="map-image" src="assets/img/basemap.jpg" alt="Shaded relief of the lunar south pole from LOLA terrain" draggable="false">
+<svg class="graticule" id="grid" aria-hidden="true" viewBox="-304 -304 608 608" preserveAspectRatio="none"></svg>
+</div>
+<div class="overlay">
+<div id="label-layer"></div>
+<div id="pin-layer"></div>
+<div class="marker" id="marker"><span>SELECTED SITE</span></div>
+</div>
+<div class="selbox" id="selbox"></div>
+<span class="map-axis">↑ 0° E</span>
+<div class="map-ui zoom-tools" role="group" aria-label="Map view">
+<button type="button" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+<button type="button" id="zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
+<button type="button" id="zoom-reset" aria-label="Reset view" title="Reset view">↺</button>
+<button type="button" id="zoom-prev" aria-label="Previous view" title="Previous view (Backspace)">↶</button>
+<button type="button" id="zoom-zone" class="zone-button" aria-label="Zoom to the working zone" title="Zoom to the 154 km working zone">Zone</button>
+<button type="button" id="map-help-toggle" aria-label="Map controls" aria-expanded="false" aria-controls="map-help" title="Map controls">?</button>
+</div>
+<div class="map-ui map-help" id="map-help" role="note" hidden><b>Click</b> place site · <b>Drag</b> zoom to area · <b>Ctrl + wheel</b> zoom · <b>Middle drag</b> or <b>Space + drag / arrows</b> pan · <b>Right-click</b> menu · <b>Backspace</b> previous view · <span class="kbd">.</span> place at cursor · <b>Zone</b> zoom to the working zone · <b>↺</b> whole map</div>
+<span class="map-ui map-scale" id="readout">×1.0</span>
+<div class="ctx" id="ctx" role="menu" aria-label="Map menu">
+<button type="button" role="menuitem" data-act="place">Place site here <span class="kbd">.</span></button>
+<button type="button" role="menuitem" data-act="copy">Copy coordinates</button>
+<hr>
+<button type="button" role="menuitem" data-act="zoom">Zoom to here</button>
+<button type="button" role="menuitem" data-act="reset">Reset view</button>
+</div>
+</div>
+<div class="map-status">
+<span>LOLA shaded relief, display lighting · Dimmed: outside the 154 km zone · Labels approximate</span>
+</div>
+<div class="site3d" id="site3d" hidden aria-label="Site view: terrain around the selected site"></div>
+</div>
+</section>
+
+<div class="analysis-column">
+<section class="panel setup-panel"><div class="panel-head"><h2>Mission setup</h2></div>
+<div class="presets" id="presets" hidden><div class="presets-head"><span>Example scenarios</span><small id="presets-note">Example scenarios, not recommendations.</small></div><div class="preset-buttons" id="preset-buttons" role="group" aria-label="Example scenarios"></div></div>
+<form id="mission-form" novalidate>
+<fieldset class="location-group">
+<legend>Observer location</legend>
+<div class="group-title" aria-hidden="true">Observer location</div>
+<div class="pair">
+<div><label for="lat">Latitude [°]</label><input id="lat" type="number" min="-90" max="-80" step="0.0001" value="-88.9" required><span class="field-error" id="error-lat" role="alert"></span></div>
+<div><label for="lon">Longitude [° E]</label><input id="lon" type="number" min="-180" max="180" step="0.0001" value="43.2" required><span class="field-error" id="error-lon" role="alert"></span></div>
+</div>
+<p class="hint" id="zone-hint">Supported zone: within 154 km of the pole, approximately 84.9–90° S. Click the map to pick a site.</p>
+</fieldset>
+
+<fieldset class="interval-group">
+<legend>Mission interval / UTC</legend>
+<div class="group-title" aria-hidden="true">Mission interval / UTC</div>
+<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" value="2026-12-18" min="2000-01-01" max="2050-12-31" required><span class="field-error" id="error-start" role="alert"></span></div>
+<div class="field"><label for="hour">Start hour</label><div class="unit-input"><input id="hour" type="number" min="0" max="23" step="1" value="0" required><span class="field-error" id="error-hour" role="alert"></span><span>h UTC</span></div></div>
+<div class="field"><label for="duration">Duration</label><div class="unit-input"><input id="duration" type="number" min="1" max="60" value="14" step="any" required><span class="field-error" id="error-duration" role="alert"></span><span>d</span></div></div>
+<p class="hint" id="interval-end"></p>
+</fieldset>
+
+<fieldset class="profile-group">
+<legend>Mission profile</legend>
+<div class="group-title" aria-hidden="true">Mission profile</div>
+<div class="field"><label for="height">Instrument height</label><div class="unit-input"><input id="height" type="number" min="0" max="100" value="0" step="any" required><span class="field-error" id="error-height" role="alert"></span><span>m</span></div></div>
+<div class="field"><label for="night">Maximum night</label><div class="unit-input"><input id="night" type="number" min="0" value="40" step="any" required><span class="field-error" id="error-night" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="gap">Maximum comms gap</label><div class="unit-input"><input id="gap" type="number" min="0" value="24" step="any" required><span class="field-error" id="error-gap" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="sun">Minimum Sun share</label><div class="unit-input"><input id="sun" type="number" min="0" max="100" value="50" step="any" required><span class="field-error" id="error-sun" role="alert"></span><span>%</span></div></div>
+<p class="hint example-hint" id="example-note">Example setup, not a recommendation.</p>
+</fieldset>
+<div class="form-actions"><button type="submit" id="run-button" class="primary">Run assessment →</button><p id="form-error" class="error" role="alert"></p></div>
+</form></section>
+</div>
+
+</div>
+<div class="setup-tail"><span></span><button type="button" id="view-results">View assessment ↓</button></div>
+</section>
+
+<section id="results-section" class="results-section" aria-label="Assessment and plots">
+<div class="results-heading"><h2>Assessment</h2><span class="mono" id="window-label"></span><div class="tools"><button id="pin" disabled>+ Add site to comparison</button><button id="export" disabled>↓ Export CSV</button></div></div>
+
+<section class="panel assessment-panel" id="assessment-results" aria-label="Window assessment">
+<div class="panel-head"><h2>Assessment</h2><span id="run-state" class="mono">NOT CALCULATED</span></div>
+<div id="window-message" class="inline-message" role="status" hidden></div>
+<div id="window-skeleton" class="window-skeleton" hidden><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+<div class="result-notice" role="status">Settings changed. Run again to update.</div>
+<div class="assessment"><div class="verdict" id="verdict">Not calculated yet</div><p id="explanation">Pick a site on the map or enter coordinates, then press Run assessment.</p></div>
+<div id="criteria" class="criteria-grid"></div>
+<div class="secondary-metrics" id="secondary-metrics"></div>
+<div class="mini-meta" id="mini-meta"></div>
+</section>
+
+<section class="panel next-panel" id="next-panel" aria-label="Nearest acceptable window" hidden>
+<div class="panel-head"><h2>Nearest acceptable window</h2><span id="next-state" class="mono"></span></div>
+<p class="next-text" id="next-window-text" role="status"></p>
+<div class="next-detail" id="next-detail" hidden>
+<div class="next-period"><span class="status-badge met">ACCEPTABLE</span><strong id="next-period"></strong><button type="button" id="next-window-open">Check in detail →</button></div>
+<div class="next-metrics" id="next-metrics"></div>
+<div class="next-timeline" id="next-timeline"></div>
+</div>
+</section>
+
+<section class="panel bottom" id="visibility-timeline">
+<div class="panel-head"><h2>Visibility timeline</h2></div>
+<div class="inspector-toolbar"><div class="legend-items"><span><i class="sun-key"></i>Sun</span><span><i class="earth-key"></i>Earth</span><span><i class="hidden-key"></i>Blocked</span></div></div>
+<div class="timeline" id="timeline"></div>
+<details class="interval-details"><summary>Exact visibility intervals / UTC</summary><div id="interval-table"></div></details>
+</section>
+
+<section class="panel geometry-panel">
+<div class="panel-head"><h2>Daily geometry</h2><span id="geometry-meta">10 min steps</span></div>
+<div class="geometry-controls"><label for="chart-day">Inspect day / UTC</label><input id="chart-day" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18"><span>Solid: body altitude · Dashed: terrain horizon</span></div>
+<div class="geometry-charts"><div data-body="sun"><h3>Sun</h3><div id="sun-chart"></div></div><div data-body="earth"><h3>Earth</h3><div id="earth-chart"></div></div></div>
+<p class="terrain-example" id="terrain-example"></p>
+</section>
+
+<div class="epoch-strip"><div class="under-map" id="instant-summary"><div><small>UTC</small><strong id="epoch">—</strong></div><div><small>Visibility</small><strong id="instant-state">—</strong></div></div></div>
+<div class="outputs">
+<section class="panel"><div class="panel-head"><h2>Current geometry</h2><span id="instant-meta"></span></div><div id="instant-message" role="status" hidden></div><table><thead><tr><th>Quantity</th><th>Sun</th><th>Earth</th></tr></thead><tbody id="instant-table"></tbody></table></section>
+<section class="panel"><div class="panel-head"><h2>Window report</h2><span id="report-meta"></span></div><table><thead><tr><th>Quantity</th><th>Value</th><th>Unit</th></tr></thead><tbody id="report"></tbody></table><p class="data-note" id="report-context"></p></section>
+</div>
+</section>
+</div>
+
+<section id="search-view" role="tabpanel" aria-labelledby="tab-search" class="secondary-view" hidden>
+<div class="search-body">
+<div class="panel search-form-panel"><div class="panel-head"><h2>Find sites &amp; start dates</h2></div>
+<form id="search-form" class="search-controls" novalidate>
+<div class="field"><label for="search-from">First start date / UTC</label><input id="search-from" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-search-from" role="alert"></span></div>
+<div class="field"><label for="search-until">Last start date / UTC</label><input id="search-until" type="date" min="2000-01-01" max="2050-12-31" value="2027-01-17" required><span class="field-error" id="error-search-until" role="alert"></span></div>
+<div class="field"><label for="search-region">Search region</label><select id="search-region"><option value="zone">Entire supported region</option><option value="circle">Circle around selected site</option></select></div>
+<div class="field" id="radius-field" hidden><label for="search-radius">Radius around selected site [km]</label><input id="search-radius" type="number" min="5" max="308" value="25" step="1"><span class="field-error" id="error-search-radius" role="alert"></span></div>
+<div class="field"><label for="search-duration">Duration</label><div class="unit-input"><input id="search-duration" type="number" min="1" max="60" value="14" step="any" required><span class="field-error" id="error-search-duration" role="alert"></span><span>d</span></div></div>
+<div class="field"><label for="search-night">Maximum night</label><div class="unit-input"><input id="search-night" type="number" min="0" value="40" step="any" required><span class="field-error" id="error-search-night" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="search-gap">Maximum comms gap</label><div class="unit-input"><input id="search-gap" type="number" min="0" value="24" step="any" required><span class="field-error" id="error-search-gap" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="search-sun">Minimum Sun share</label><div class="unit-input"><input id="search-sun" type="number" min="0" max="100" value="50" step="any" required><span class="field-error" id="error-search-sun" role="alert"></span><span>%</span></div></div>
+<button type="submit" id="search-button" class="primary">Search</button>
+<p id="search-context" class="hint"></p>
+</form>
+<p class="data-note search-height">Search uses horizons precomputed for an instrument height of 0 m; the height field does not apply here.</p>
+</div>
+<div class="panel search-map-panel"><div class="panel-head"><h2>Acceptable start dates / site grid</h2><span id="search-count"></span></div>
+<div class="search-map" id="search-map"><svg id="search-grid" viewBox="-160 -160 320 320" role="img" aria-label="Share of acceptable start dates on a 5 km polar grid"></svg><div id="search-overlay" class="search-overlay" role="status" hidden></div></div>
+<div class="map-legend"><span>Acceptable start dates</span><span class="share-ramp"></span><span>0% → 100%</span><span>5 km squares · dots: no acceptable start</span></div>
+<div id="search-message" class="inline-message" role="status" hidden></div>
+<p class="data-note" id="search-note">Map: hourly screening · Top 10: minute resolution.</p>
+</div>
+<section class="panel search-top-panel"><div class="panel-head"><h2>Top 10 sites</h2></div><div id="search-results" class="search-table-wrap"></div></section>
+</div>
+</section>
+</main>
+
+<footer><span>LUCY · Landing windows, not a guarantee of mission success</span></footer>
+
+<dialog id="sources">
+<div class="panel-head"><h2>Method, data &amp; sources</h2><button id="close-sources">Close ×</button></div>
+<div class="dialog-content">
+<h3>What LUCY calculates</h3>
+<p>For a site and a mission window, LUCY checks minute by minute whether the Sun is visible (power) and whether the Earth is visible (direct communication), then compares the longest night, the Sun share and the longest communication gap with the mission's thresholds. The calculation is deterministic and reproducible, with no AI. It shows landing windows that meet the thresholds; it does not guarantee mission success.</p>
+<h3>How visibility is decided</h3>
+<p>Terrain horizon: for every site, the highest terrain elevation angle in 720 directions (0.5° each) out to 150 km, computed from the LOLA elevation model on the lunar sphere. A body is visible when its altitude is above the terrain horizon in its own direction. Sun and Earth positions come from the JPL DE440 ephemeris in the lunar body-fixed frame (MOON_ME), computed locally with Skyfield.</p>
+<h3>Data</h3>
+<ul>
+<li>LOLA south pole elevation model, 80 m per pixel, LDEM_80S_80MPP_ADJ (Barker et al., 2023, PSJ 4:183; NASA GSFC PGDA product 90).</li>
+<li>JPL planetary ephemeris DE440 (de440s.bsp), lunar orientation moon_pa_de440_200625.bpc, frame kernel moon_de440_250416.tf, constants pck00011.tpc (NASA NAIF).</li>
+</ul>
+<h3>Supported domain</h3>
+<p>Within 154 km of the lunar south pole, approximately 84.9–90° S. Dates 2000–2050. Windows 1–60 days. A site outside coverage returns "insufficient terrain data", not a failed assessment.</p>
+<h3>Limits of the model</h3>
+<p>Body centres (no partial Sun disc), no eclipses, direct line of sight to Earth. Window intervals are resolved to a minute; daily charts use 10-minute samples. Search map shares use hourly samples of start times; top search results are recalculated at 1-minute resolution. The map background is shaded LOLA relief with a fixed display light, not the illumination of any date. Crater labels are approximate.</p>
+</div>
+</dialog>
+<div class="notification" id="notification" role="status" hidden></div>
+
+<script src="assets/js/features.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/map.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/date-picker.js"></script>
+<script src="assets/js/select.js"></script>
+<script type="module" src="assets/js/site3d.js"></script>
+</body>
+</html>

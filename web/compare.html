@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="LUCY (Lunar Uptime &amp; Communication Yardstick): compare two or three candidate landing sites near the lunar south pole over one mission window.">
+<title>LUCY | Compare sites</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png">
+<link rel="stylesheet" href="assets/css/lucy.css">
+</head>
+<body class="comparison-page">
+<header>
+<div class="header-brand"><a class="brand" href="index.html"><img src="assets/img/logo.png" alt="LUCY" width="90" height="28"></a><div class="product">Lunar Uptime &amp; Communication Yardstick</div></div>
+<nav aria-label="Primary navigation"><div class="nav-links"><a href="index.html">Site analysis</a><a href="compare.html" aria-current="page">Comparison</a><a href="index.html#search">Window search</a></div></nav>
+<div class="header-tools"><span class="mode" id="data-state">Connecting…</span><button type="button" id="about">Method &amp; sources</button></div>
+</header>
+<div class="workspace-title"><div><h1>Compare candidate sites</h1></div><div class="tools"><button type="button" id="load-examples">Example sites</button><button type="button" id="add-site">+ Add third site</button></div></div>
+<main>
+<section class="panel"><div class="panel-head"><h2>Shared mission profile</h2><span id="example-note">Example setup, not a recommendation.</span></div>
+<form id="compare-profile" class="compare-profile" novalidate>
+<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-start" role="alert"></span></div>
+<div class="field"><label for="hour">Start hour [h UTC]</label><input id="hour" type="number" min="0" max="23" step="1" value="0" required><span class="field-error" id="error-hour" role="alert"></span></div>
+<div class="field"><label for="days">Duration [d]</label><input id="days" type="number" min="1" max="60" step="any" value="14" required><span class="field-error" id="error-days" role="alert"></span></div>
+<div class="field"><label for="night">Max night [h]</label><input id="night" type="number" min="0" step="any" value="40" required><span class="field-error" id="error-night" role="alert"></span></div>
+<div class="field"><label for="gap">Max comms gap [h]</label><input id="gap" type="number" min="0" step="any" value="24" required><span class="field-error" id="error-gap" role="alert"></span></div>
+<div class="field"><label for="sun">Min Sun [%]</label><input id="sun" type="number" min="0" max="100" step="any" value="50" required><span class="field-error" id="error-sun" role="alert"></span></div>
+<div class="field"><label for="height">Height [m]</label><input id="height" type="number" min="0" max="100" step="any" value="0" required><span class="field-error" id="error-height" role="alert"></span></div>
+<button class="primary" type="submit" id="compare-run">Compare sites →</button>
+</form></section>
+<form id="candidate-form" class="candidate-grid" aria-label="Candidate coordinates" novalidate></form>
+<div class="comparison-summary"><h2>Window comparison</h2><span id="comparison-window" class="mono"></span></div>
+<div id="comparison-message" class="inline-message" role="status" hidden></div>
+<section class="panel comparison-matrix"><div id="comparison-matrix"></div></section>
+<section class="panel comparison-intervals"><div class="panel-head"><h2>Visibility over the shared window</h2><div class="legend-items"><span><i class="sun-key"></i>Sun</span><span><i class="earth-key"></i>Earth</span><span><i class="hidden-key"></i>Blocked</span></div></div><div id="comparison-timelines" class="candidate-grid"></div></section>
+</main>
+<footer><span>LUCY · Landing windows, not a guarantee of mission success</span></footer>
+<dialog id="sources">
+<div class="panel-head"><h2>Method, data &amp; sources</h2><button id="close-sources">Close ×</button></div>
+<div class="dialog-content">
+<h3>What LUCY calculates</h3>
+<p>For a site and a mission window, LUCY checks minute by minute whether the Sun is visible (power) and whether the Earth is visible (direct communication), then compares the longest night, the Sun share and the longest communication gap with the mission's thresholds. The calculation is deterministic and reproducible, with no AI. It shows landing windows that meet the thresholds; it does not guarantee mission success.</p>
+<h3>How visibility is decided</h3>
+<p>Terrain horizon: for every site, the highest terrain elevation angle in 720 directions (0.5° each) out to 150 km, computed from the LOLA elevation model on the lunar sphere. A body is visible when its altitude is above the terrain horizon in its own direction. Sun and Earth positions come from the JPL DE440 ephemeris in the lunar body-fixed frame (MOON_ME), computed locally with Skyfield.</p>
+<h3>Data</h3>
+<ul>
+<li>LOLA south pole elevation model, 80 m per pixel, LDEM_80S_80MPP_ADJ (Barker et al., 2023, PSJ 4:183; NASA GSFC PGDA product 90).</li>
+<li>JPL planetary ephemeris DE440 (de440s.bsp), lunar orientation moon_pa_de440_200625.bpc, frame kernel moon_de440_250416.tf, constants pck00011.tpc (NASA NAIF).</li>
+</ul>
+<h3>Supported domain</h3>
+<p>Within 154 km of the lunar south pole, approximately 84.9–90° S. Dates 2000–2050. Windows 1–60 days. A site outside coverage returns "insufficient terrain data", not a failed assessment.</p>
+<h3>Limits of the model</h3>
+<p>Body centres (no partial Sun disc), no eclipses, direct line of sight to Earth. Window intervals are resolved to a minute; daily charts use 10-minute samples. Search map shares use hourly samples of start times; top search results are recalculated at 1-minute resolution. The map background is shaded LOLA relief with a fixed display light, not the illumination of any date. Crater labels are approximate.</p>
+</div>
+</dialog>
+<div class="notification" id="notification" role="status" hidden></div>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/compare.js"></script>
+<script src="assets/js/date-picker.js"></script>
+</body>
+</html>
