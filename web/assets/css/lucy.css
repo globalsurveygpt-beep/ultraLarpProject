@@ -96,7 +96,7 @@ input, select { width: 100%; min-width: 0; border: 1px solid var(--line); backgr
 .section-heading { display: flex; justify-content: space-between; align-items: baseline; margin: 24px 0 12px; gap: 20px; }
 .section-heading h2 { font-size: 20px; font-weight: 500; margin: 0; letter-spacing: -.4px; }
 .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
-.assessment-panel { margin-bottom: 24px; scroll-margin-top: 78px; }
+.assessment-panel { margin-bottom: 24px; scroll-margin-top: 68px; }
 .assessment { padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .result-label { color: var(--muted); font: 10px var(--mono); }
 .verdict { font-size: 23px; font-weight: 500; margin: 7px 0; letter-spacing: -.3px; }
@@ -419,7 +419,7 @@ nav .nav-links a[aria-current=page] { color: var(--ink); border-bottom-color: va
 .setup-stage .setup-panel .form-actions .primary { width: 100%; }
 .setup-tail { margin-top: auto; padding-top: 16px; display: flex; justify-content: flex-end; }
 .setup-tail button { background: transparent; color: var(--muted); font-size: 11px; }
-.results-section { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); scroll-margin-top: 48px; }
+.results-section { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
 .results-heading { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .results-heading h2 { font-size: 20px; font-weight: 500; margin: 0; }
 .results-section > .assessment-panel { grid-column: 1; grid-row: 2; }
@@ -623,7 +623,7 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 /* Site analysis: a square map (the whole raster) as large as the screen height allows, up to
    55% of the width; the setup panel takes the rest, so no empty band appears on either side. */
 @media(min-width:901px){
-  .setup-stage{--map-side:min(55vw,max(420px,calc(100svh - 212px)))}
+  .setup-stage{--map-side:min(55vw,max(420px,calc(100svh - 186px)))}
   .setup-stage .layout{grid-template-columns:var(--map-side) minmax(0,1fr)}
   .setup-stage .analysis-column{align-self:stretch;display:flex}
   .setup-stage .setup-panel{flex:1;display:flex;flex-direction:column}
@@ -701,8 +701,29 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 @media(max-width:600px){.search-form-panel .search-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.search-form-panel .search-controls .hint{grid-column:1 / -1}}
 /* Window search on a wide screen: the square map is exactly as high as the screen allows. */
 @media(min-width:1001px){
-  .search-body{--sq:max(360px,calc(100svh - 270px));grid-template-columns:calc(var(--sq) + 2px) minmax(0,1fr);margin-bottom:12px}
+  .search-body{--sq:max(360px,calc(100svh - 244px));grid-template-columns:calc(var(--sq) + 2px) minmax(0,1fr);margin-bottom:12px}
   .search-body .search-map{aspect-ratio:auto;height:var(--sq)}
   .search-form-panel .search-controls{grid-template-columns:repeat(4,minmax(0,1fr))}
   .search-form-panel .search-controls .hint{grid-column:2 / -1}
+}
+/* Header: logo and name, the page tabs and the tools in one bar that stays on top. Its colour is
+   the logo's own background, so the logo needs no box. */
+header{position:sticky;top:0;z-index:9;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:16px;min-height:52px;padding:0 16px;background:#1e1e1e;border-bottom:1px solid var(--line)}
+.header-brand{display:flex;align-items:center;gap:16px;min-width:0}
+header .brand{display:block;line-height:0;letter-spacing:0;font-size:0}
+header .brand img{display:block;height:28px;width:auto}
+header .product{padding-left:16px;font-size:11px;letter-spacing:.6px;line-height:1.35;color:#a8a8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+header nav{position:static;display:flex;grid-template-columns:none;min-height:0;padding:0;border:0;background:transparent}
+header .nav-links{grid-column:auto;align-items:stretch;gap:32px}
+header nav button,header nav .nav-links a{padding:0 2px;font-size:12.5px;border-bottom-width:2px;align-self:stretch;display:inline-flex;align-items:center}
+.header-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0}
+.header-tools button{font-size:11px;padding:5px 11px;white-space:nowrap}
+@media(max-width:1100px){header .product{display:none}}
+@media(max-width:760px){
+  header{grid-template-columns:auto minmax(0,1fr);min-height:0;padding:8px 12px 0;row-gap:4px}
+  .header-tools{grid-column:2;grid-row:1}
+  header nav{grid-column:1 / -1;grid-row:2;justify-content:center}
+  header .nav-links{gap:20px}
+  header nav button,header nav .nav-links a{padding:10px 0;font-size:12px}
+  header .mode{display:none}
 }

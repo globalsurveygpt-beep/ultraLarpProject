@@ -162,5 +162,7 @@ $('candidate-form').onsubmit = e => { e.preventDefault(); compare(); };
 for (const id of PROFILE_IDS) $(id).addEventListener('input', stale);
 $('add-site').onclick = () => { if (sites.length >= 3) return; sites.push({ ...EXAMPLES[sites.length] }); results = null; renderCandidates(); renderResults(); save(); };
 $('load-examples').onclick = () => { sites = EXAMPLES.slice(0, 2).map(p => ({ ...p })); results = null; renderCandidates(); renderResults(); save(); };
+$('about').onclick = () => $('sources').showModal();
+$('close-sources').onclick = () => $('sources').close();
 renderCandidates(); renderResults(); loadMeta();
 if (sites.length >= 2) compare();
