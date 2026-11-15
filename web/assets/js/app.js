@@ -336,7 +336,7 @@ async function loadPresets() {
   $('preset-buttons').querySelectorAll('[data-preset]').forEach(b => { b.onclick = () => applyPreset(p.scenarios[+b.dataset.preset]); });
   $('presets').hidden = false;
 }
-function applyPreset(s) {
+function applyPreset(s, quiet) {
   const p = state.presets, start = new Date(Date.parse(p.start_utc)), f = p.profile;
   $('lat').value = s.lat_deg; $('lon').value = s.lon_deg;
   $('start').value = dateOf(start); $('hour').value = start.getUTCHours();
@@ -344,7 +344,7 @@ function applyPreset(s) {
   $('sun').value = f.min_sun_pct; $('height').value = f.observer_height_m;
   syncShared(false); clearErrors(); markStale(); updateEnd(); updateContext(); saveProfile();
   MapView.setMarker(s.lat_deg, s.lon_deg);
-  $('mission-form').requestSubmit();
+  runFromForm(quiet);
 }
 
 function exportCsv() {
@@ -505,6 +505,7 @@ function saveProfile() {
 }
 function restore() {
   const saved = Store.load();
+  state.hadSite = !!saved.site;
   const ids = { start: 'start', hour: 'hour', days: 'duration', night: 'night', gap: 'gap', sun: 'sun', height: 'height' };
   if (saved.profile) for (const [k, id] of Object.entries(ids)) if (saved.profile[k] != null && saved.profile[k] !== '') $(id).value = saved.profile[k];
   if (saved.site) { $('lat').value = saved.site.lat; $('lon').value = saved.site.lon; }
@@ -557,7 +558,9 @@ for (const id of ['lat', 'lon', 'start', 'hour', 'duration', 'height', 'night', 
   });
 }
 // After a calculation: the 3D site view when it is available, otherwise the results.
-$('mission-form').onsubmit = async e => { e.preventDefault(); saveProfile(); if (await runWindow() && !showSite3D()) scrollToResults(); };
+// quiet: the automatic first calculation on page load, which must not scroll the page.
+async function runFromForm(quiet) { saveProfile(); if (await runWindow() && !showSite3D() && !quiet) scrollToResults(); }
+$('mission-form').onsubmit = e => { e.preventDefault(); runFromForm(false); };
 $('view-results').onclick = scrollToResults;
 $('next-window-open').onclick = openNextWindow;
 $('view-map').onclick = () => setSurface('map');
@@ -588,5 +591,11 @@ enableSite3D();
 MapView.setMarker(config().lat, config().lon);
 $('search-results').innerHTML = '<div class="empty"><h2>Search the supported region</h2><p>Choose the start-date period and a region, then press Search.</p></div>';
 loadMeta();
-loadPresets();
+// The page opens with a result, not an empty dashboard: the saved site if there is one,
+// otherwise example scenario A.
+loadPresets().then(() => {
+  if (location.hash === '#search') return;
+  if (state.hadSite) runFromForm(true);
+  else if (state.presets) applyPreset(state.presets.scenarios[0], true);
+});
 if (location.hash === '#search') setView('search');

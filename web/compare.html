@@ -42,6 +42,19 @@
 <p>For a site and a mission window, LUCY checks minute by minute whether the Sun is visible (power) and whether the Earth is visible (direct communication), then compares the longest night, the Sun share and the longest communication gap with the mission's thresholds. The calculation is deterministic and reproducible, with no AI. It shows landing windows that meet the thresholds; it does not guarantee mission success.</p>
 <h3>How visibility is decided</h3>
 <p>Terrain horizon: for every site, the highest terrain elevation angle in 720 directions (0.5° each) out to 150 km, computed from the LOLA elevation model on the lunar sphere. A body is visible when its altitude is above the terrain horizon in its own direction. Sun and Earth positions come from the JPL DE440 ephemeris in the lunar body-fixed frame (MOON_ME), computed locally with Skyfield.</p>
+<h3>Check against JPL Horizons</h3>
+<p>Sun and Earth directions from LUCY compared with JPL Horizons (apparent, airless, observer on the lunar surface). 54 directions: 3 sites, Sun and Earth, 9 times between 2000 and 2050. <b>Largest difference 0.000022°</b>, check limit 0.01°. Sample for 2026-11-14 00:00 UTC, each cell Horizons / LUCY in degrees:</p>
+<div class="table-scroll"><table class="check-table">
+<thead><tr><th>Site</th><th>Body</th><th>Azimuth</th><th>Altitude</th><th>Difference</th></tr></thead>
+<tbody>
+<tr><td>-89.5°, 0.0° E</td><td>Sun</td><td>126.6273 / 126.6273</td><td>1.2583 / 1.2583</td><td>&lt; 0.000001</td></tr>
+<tr><td>-89.5°, 0.0° E</td><td>Earth</td><td>358.7734 / 358.7734</td><td>-4.1485 / -4.1486</td><td>0.000019</td></tr>
+<tr><td>-85.5°, 90.0° E</td><td>Sun</td><td>36.7755 / 36.7755</td><td>5.1654 / 5.1654</td><td>&lt; 0.000001</td></tr>
+<tr><td>-85.5°, 90.0° E</td><td>Earth</td><td>269.1226 / 269.1226</td><td>-4.7309 / -4.7309</td><td>0.000019</td></tr>
+<tr><td>-87.0°, -120.0° E</td><td>Sun</td><td>246.5713 / 246.5713</td><td>0.3647 / 0.3647</td><td>&lt; 0.000001</td></tr>
+<tr><td>-87.0°, -120.0° E</td><td>Earth</td><td>118.5366 / 118.5366</td><td>-6.0865 / -6.0866</td><td>0.000019</td></tr>
+</tbody></table></div>
+<p class="data-note">This checks body directions; the terrain horizon is not part of it. Horizons values fetched 2026-11-14 (Horizons uses DE441). Reproduce: <code>python scripts/verify_ephemeris.py</code>; reference file <code>tests/fixtures/horizons_reference.json</code>.</p>
 <h3>Data</h3>
 <ul>
 <li>LOLA south pole elevation model, 80 m per pixel, LDEM_80S_80MPP_ADJ (Barker et al., 2023, PSJ 4:183; NASA GSFC PGDA product 90).</li>

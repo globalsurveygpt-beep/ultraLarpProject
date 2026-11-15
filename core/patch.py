@@ -7,7 +7,7 @@ A square of terrain centred on the site, sampled on a regular grid in the site's
 Grid: `size` x `size` points, `step_m` apart, from -half_size_m to +half_size_m along east
 and north. Row 0 is the northern edge, column 0 the western edge. Each value is the "up"
 coordinate in metres of that terrain point in the local frame of the site, measured from
-the ground at the site; it includes the drop of the lunar sphere (about 29 m at 10 km), so
+the ground at the site; it includes the drop of the lunar sphere (about 115 m at 20 km), so
 the view shows the surface as an observer would. No vertical exaggeration.
 
 The grid point at offset (e, n) is the point at arc distance hypot(e, n) from the site in
@@ -23,8 +23,8 @@ from core.geometry import enu_basis
 from core.horizon import horizon
 from core.terrain import InsufficientData, Terrain
 
-PATCH_HALF_SIZE_M = 10_000.0
-PATCH_SIZE = 257            # points per side: 78.125 m spacing, close to the 80 m terrain pixel
+PATCH_HALF_SIZE_M = 20_000.0
+PATCH_SIZE = 513            # points per side: 78.125 m spacing, close to the 80 m terrain pixel
 HEIGHT_DECIMALS = 1
 
 

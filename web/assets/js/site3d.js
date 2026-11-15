@@ -5,7 +5,7 @@
    - Observer: the camera stays at the instrument height and looks around (drag, wheel, arrows).
 
    What is drawn and from where:
-   - near terrain: GET /api/terrain-patch, a 20 x 20 km LOLA grid in the site's local frame,
+   - near terrain: GET /api/terrain-patch, a 40 x 40 km LOLA grid in the site's local frame,
      including the drop of the lunar sphere, no vertical exaggeration;
    - far terrain: the same horizon profile the calculation uses (720 directions, out to 150 km),
      drawn as a silhouette ring, so what hides the Sun here is what hides it in the numbers;
@@ -16,14 +16,14 @@
 import * as THREE from './vendor/three.module.min.js';
 
 const Api = window.LucyApi;
-const RING_M = 30000;          // silhouette ring: beyond the near grid (its corners are at 14.1 km)
-const SKY_M = 40000;           // Sun and Earth sit beyond the ring, so the ring hides them when it should
-const LABEL_M = 36000;
+const RING_M = 40000;          // silhouette ring: beyond the near grid (its corners are at 28.3 km)
+const SKY_M = 52000;           // Sun and Earth sit beyond the ring, so the ring hides them when it should
+const LABEL_M = 47000;
 const MIN_EYE_M = 2;           // camera at the instrument height, never below 2 m (a standing observer)
 const SUN_DRAW_DEG = 2.0;      // real Sun: 0.53 deg
 const EARTH_DRAW_DEG = 2.6;    // real Earth: about 1.9 deg
 const COLORS = { sun: 0xd8bb79, earth: 0x82b2cc };
-const OVERVIEW = { fov: 45, pitchDeg: 50, distM: 11000, minDistM: 1500, maxDistM: 40000, minPitchDeg: 8, maxPitchDeg: 88, arrowM: 4500, edgeM: 11500 };
+const OVERVIEW = { fov: 45, pitchDeg: 50, distM: 22000, minDistM: 2000, maxDistM: 70000, minPitchDeg: 8, maxPitchDeg: 88, arrowM: 8000, edgeM: 22500 };
 
 const dirOf = (altDeg, azDeg) => {
   const a = THREE.MathUtils.degToRad(altDeg), z = THREE.MathUtils.degToRad(azDeg);
@@ -66,8 +66,8 @@ class SiteView {
       + '<div class="s3d-hud s3d-bodies"><div data-k="sun"></div><div data-k="earth"></div></div>'
       + '<div class="s3d-hud s3d-tools"><span class="s3d-modes"><button type="button" data-mode="overview" aria-pressed="true">Overview</button><button type="button" data-mode="observer" aria-pressed="false">Observer</button></span>'
       + '<button type="button" data-look="sun">Look at Sun</button><button type="button" data-look="earth">Look at Earth</button></div>'
-      + '<div class="s3d-hud s3d-note"><span data-for="overview">Overview: drag to rotate and tilt · Wheel: zoom · Arrows: rotate<br>Camera above the site; the arrows point to the Sun and Earth. Terrain ±10 km from LOLA, no vertical exaggeration. Shading lit for readability; cast shadows not drawn.</span>'
-      + '<span data-for="observer">Observer: drag to look around · Wheel: zoom · Arrows: turn<br>Camera at the instrument height. Terrain ±10 km from LOLA, no vertical exaggeration. Far ridges: horizon profile to 150 km. Sun and Earth discs enlarged; positions exact. Shading lit for readability; cast shadows not drawn.</span></div>'
+      + '<div class="s3d-hud s3d-note"><span data-for="overview">Overview: drag to rotate and tilt · Wheel: zoom · Arrows: rotate<br>Camera above the site; the arrows point to the Sun and Earth. Terrain ±20 km from LOLA, no vertical exaggeration. Shading lit for readability; cast shadows not drawn.</span>'
+      + '<span data-for="observer">Observer: drag to look around · Wheel: zoom · Arrows: turn<br>Camera at the instrument height. Terrain ±20 km from LOLA, no vertical exaggeration. Far ridges: horizon profile to 150 km. Sun and Earth discs enlarged; positions exact. Shading lit for readability; cast shadows not drawn.</span></div>'
       + '<div class="s3d-status" data-k="status" hidden></div>';
     this.q = k => this.el.querySelector(`[data-k="${k}"]`);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -93,7 +93,7 @@ class SiteView {
     for (const k of ['sun', 'earth']) {
       const disc = discSprite(COLORS[k], k === 'sun'), label = textSprite(k === 'sun' ? 'SUN' : 'EARTH', k === 'sun' ? '#d8bb79' : '#82b2cc');
       const size = 2 * SKY_M * Math.tan(THREE.MathUtils.degToRad(k === 'sun' ? SUN_DRAW_DEG : EARTH_DRAW_DEG) / 2) * (k === 'sun' ? 2.2 : 1.6);
-      disc.scale.set(size, size, 1); label.scale.set(5200, 1300, 1);
+      disc.scale.set(size, size, 1); label.scale.set(6800, 1700, 1);
       disc.visible = label.visible = false;
       this.scene.add(disc, label);
       this.bodies[k] = { disc, label, state: null, arrow: null, tag: null };
@@ -302,14 +302,14 @@ class SiteView {
     const zero = [];
     for (let i = 0; i <= 360; i++) { const d = dirOf(0, i); zero.push(d.x * LABEL_M, obs, d.z * LABEL_M); }
     const zg = new THREE.BufferGeometry(); zg.setAttribute('position', new THREE.Float32BufferAttribute(zero, 3));
-    const zl = new THREE.Line(zg, new THREE.LineDashedMaterial({ color: 0x5a5a5a, dashSize: 600, gapSize: 500, depthTest: false }));
+    const zl = new THREE.Line(zg, new THREE.LineDashedMaterial({ color: 0x5a5a5a, dashSize: 780, gapSize: 650, depthTest: false }));
     zl.computeLineDistances(); zl.renderOrder = 5; this.far.add(zl);
 
     // Compass: N E S W and ticks every 30 degrees on the mathematical horizon.
     for (const [az, name] of [[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W'], [30, '30'], [60, '60'], [120, '120'], [150, '150'], [210, '210'], [240, '240'], [300, '300'], [330, '330']]) {
       const s = textSprite(name, name.length === 1 ? '#e6e6e6' : '#8d8d8d'), d = dirOf(0, az);
       s.position.set(d.x * LABEL_M, obs + LABEL_M * Math.tan(THREE.MathUtils.degToRad(-1.6)), d.z * LABEL_M);
-      s.scale.set(name.length === 1 ? 3600 : 3000, name.length === 1 ? 900 : 750, 1);
+      s.scale.set(name.length === 1 ? 4700 : 3900, name.length === 1 ? 1170 : 980, 1);
       this.far.add(s);
     }
     this.buildOverview();
@@ -327,17 +327,17 @@ class SiteView {
     };
     const mark = discSprite(0xffffff, false); mark.material.sizeAttenuation = false; mark.material.depthTest = false;
     mark.scale.set(0.035, 0.035, 1); mark.renderOrder = 9; this.near.add(mark);
-    const pin = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 900, 0)]),
+    const pin = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1600, 0)]),
       new THREE.LineBasicMaterial({ color: 0xffffff, depthTest: false }));
     pin.renderOrder = 9; this.near.add(pin);
-    const tag = fixed('SITE', '#ffffff', 0.3, 0.075); tag.position.set(0, 1250, 0); this.near.add(tag);
+    const tag = fixed('SITE', '#ffffff', 0.3, 0.075); tag.position.set(0, 2300, 0); this.near.add(tag);
     for (const [az, name] of [[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W']]) {
       const d = dirOf(0, az), s = fixed(name, '#e6e6e6', 0.15, 0.0375);
       s.position.set(d.x * OVERVIEW.edgeM, 0, d.z * OVERVIEW.edgeM); this.near.add(s);
     }
     for (const k of ['sun', 'earth']) {
       const b = this.bodies[k], color = COLORS[k];
-      b.arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), OVERVIEW.arrowM, color, 700, 380);
+      b.arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), OVERVIEW.arrowM, color, 1200, 650);
       for (const m of [b.arrow.line.material, b.arrow.cone.material]) { m.depthTest = false; m.transparent = true; }
       b.arrow.renderOrder = 8; b.arrow.line.renderOrder = b.arrow.cone.renderOrder = 8;
       b.arrow.visible = false;
@@ -355,7 +355,7 @@ class SiteView {
       const d = dirOf(s.alt_deg, s.az_deg), op = s.visible ? 1 : 0.4;
       b.arrow.setDirection(d);
       b.arrow.line.material.opacity = b.arrow.cone.material.opacity = b.tag.material.opacity = op;
-      b.tag.position.copy(d.clone().multiplyScalar(OVERVIEW.arrowM + 900));
+      b.tag.position.copy(d.clone().multiplyScalar(OVERVIEW.arrowM + 1500));
       b.arrow.visible = b.tag.visible = true;
     }
   }

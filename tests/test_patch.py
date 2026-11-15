@@ -98,8 +98,8 @@ def test_terrain_patch_endpoint(patch_server):
     assert status == 200 and r["data_status"] == "ok"
     assert r["site"] == {"lat_deg": -89.5, "lon_deg": 0, "height_m": 100}
     g = r["grid"]
-    assert g["size"] == 257 and g["half_size_m"] == 10000 and g["step_m"] == 78.125
-    assert len(g["up_m"]) == 257 * 257
+    assert g["size"] == 513 and g["half_size_m"] == 20000 and g["step_m"] == 78.125
+    assert len(g["up_m"]) == 513 * 513
     h = r["horizon"]
     assert h["step_deg"] == 0.5 and h["radius_m"] == 150000 and h["observer_height_m"] == 2
     assert len(h["elevation_deg"]) == 720 and h["elevation_deg"][0] == 2
@@ -125,7 +125,7 @@ def test_real_patch_is_centred_on_the_site():
     try:
         p = patch.terrain_patch(t, -88.9, 43.2)
         u = p["up_m"]
-        assert u.shape == (257, 257) and u[128, 128] == pytest.approx(0.0, abs=0.05)
+        assert u.shape == (513, 513) and u[256, 256] == pytest.approx(0.0, abs=0.05)
         assert p["ground_height_m"] == pytest.approx(t.height_at(-88.9, 43.2))
         assert np.isfinite(u).all()
     finally:

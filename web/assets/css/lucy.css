@@ -150,6 +150,11 @@ dialog::backdrop { background: #000b; }
 .dialog-content h3 { font-size: 14px; margin-top: 24px; }
 .dialog-content p, .dialog-content li { color: var(--muted); font-size: 12px; }
 .dialog-content li { margin: 10px 0; }
+.dialog-content .table-scroll{overflow-x:auto}
+.check-table{width:100%;border-collapse:collapse;font:11px/1.5 var(--mono);color:var(--muted)}
+.check-table th,.check-table td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.check-table th{color:var(--ink);font-weight:500}
+.dialog-content code{font:11px var(--mono);color:var(--ink)}
 .notification { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); max-width: 90vw; background: var(--ink); color: var(--bg); padding: 12px 20px; font-size: 12px; border-radius: 4px; z-index: 10; }
 [hidden] { display: none !important; }
 @media(max-width:1100px) {
@@ -199,7 +204,11 @@ dialog::backdrop { background: #000b; }
 .inline-message[data-kind=input]{border-left:3px solid var(--ink)}
 .secondary-metrics{padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px 24px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 .secondary-metrics b{font:14px var(--mono);color:var(--ink);margin-left:8px}.secondary-metrics .profile-label{width:100%;font-size:11px}.secondary-metrics .profile-label b{font-size:11px}
-.geometry-panel{margin-bottom:24px}.geometry-controls{padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;border-bottom:1px solid var(--line)}
+.geometry-panel{margin-bottom:24px}
+.physics-notes{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.physics-notes>div{padding:14px 24px}.physics-notes>div+div{border-left:1px solid var(--line)}
+.physics-notes h3{font-size:12px;font-weight:500;margin:0 0 6px}.physics-notes p{margin:0;color:var(--muted);font-size:11px;line-height:1.55}
+@media (max-width:700px){.physics-notes{grid-template-columns:1fr}.physics-notes>div+div{border-left:0;border-top:1px solid var(--line)}}.geometry-controls{padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;border-bottom:1px solid var(--line)}
 .geometry-controls label{margin:0}.geometry-controls input{width:170px}.geometry-controls>span{margin-left:auto;color:var(--muted);font-size:11px}
 .geometry-charts{display:grid;grid-template-columns:1fr 1fr}.geometry-charts>div{padding:20px;min-width:0}.geometry-charts>div+div{border-left:1px solid var(--line)}
 .geometry-charts h3{font-size:13px;font-weight:500;margin:0 0 12px}.geometry-charts .chart{height:210px}
