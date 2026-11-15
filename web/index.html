@@ -46,7 +46,10 @@
 <button type="button" id="zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
 <button type="button" id="zoom-reset" aria-label="Reset view" title="Reset view">↺</button>
 <button type="button" id="zoom-prev" aria-label="Previous view" title="Previous view (Backspace)">↶</button>
+<button type="button" id="zoom-zone" class="zone-button" aria-label="Zoom to the working zone" title="Zoom to the 154 km working zone">Zone</button>
+<button type="button" id="map-help-toggle" aria-label="Map controls" aria-expanded="false" aria-controls="map-help" title="Map controls">?</button>
 </div>
+<div class="map-ui map-help" id="map-help" role="note" hidden><b>Click</b> place site · <b>Drag</b> zoom to area · <b>Ctrl + wheel</b> zoom · <b>Middle drag</b> or <b>Space + drag / arrows</b> pan · <b>Right-click</b> menu · <b>Backspace</b> previous view · <span class="kbd">.</span> place at cursor · <b>Zone</b> zoom to the working zone · <b>↺</b> whole map</div>
 <span class="map-ui map-scale" id="readout">×1.0</span>
 <div class="ctx" id="ctx" role="menu" aria-label="Map menu">
 <button type="button" role="menuitem" data-act="place">Place site here <span class="kbd">.</span></button>
@@ -56,10 +59,9 @@
 <button type="button" role="menuitem" data-act="reset">Reset view</button>
 </div>
 </div>
-<p class="map-help"><b>Click</b> place site · <b>Drag</b> zoom to area · <b>Ctrl + wheel</b> zoom · <b>Middle drag</b> or <b>Space + drag / arrows</b> pan · <b>Right-click</b> menu · <b>Backspace</b> previous view · <span class="kbd">.</span> place at cursor</p>
 <div class="map-status">
 <span id="map-coordinates"></span>
-<span>Shaded relief: LOLA, whole raster shown at 160 m, lighting for display only · Dimmed: outside the 154 km working zone · Labels: approximate positions</span>
+<span>LOLA shaded relief, display lighting · Dimmed: outside the 154 km zone · Labels approximate</span>
 </div>
 <div class="site3d" id="site3d" hidden aria-label="Site view: terrain around the selected site"></div>
 </div>
@@ -116,13 +118,22 @@
 <div class="assessment"><div class="verdict" id="verdict">Not calculated yet</div><p id="explanation">Pick a site on the map or enter coordinates, then press Run assessment.</p></div>
 <div id="criteria" class="criteria-grid"></div>
 <div class="secondary-metrics" id="secondary-metrics"></div>
-<div class="next-window" id="next-window" role="status" hidden><span class="next-window-label">Nearest acceptable window</span><span id="next-window-text"></span><button type="button" id="next-window-open" hidden>Check in detail →</button></div>
 <div class="mini-meta" id="mini-meta"></div>
+</section>
+
+<section class="panel next-panel" id="next-panel" aria-label="Nearest acceptable window" hidden>
+<div class="panel-head"><h2>Nearest acceptable window</h2><span id="next-state" class="mono"></span></div>
+<p class="next-text" id="next-window-text" role="status"></p>
+<div class="next-detail" id="next-detail" hidden>
+<div class="next-period"><span class="status-badge met">ACCEPTABLE</span><strong id="next-period"></strong><button type="button" id="next-window-open">Check in detail →</button></div>
+<div class="next-metrics" id="next-metrics"></div>
+<div class="next-timeline" id="next-timeline"></div>
+</div>
 </section>
 
 <section class="panel bottom" id="visibility-timeline">
 <div class="panel-head"><h2>Visibility timeline</h2></div>
-<div class="inspector-toolbar"><label for="cursor" style="margin:0">Time / UTC</label><input id="cursor" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Minute within mission window"><span id="cursor-label" class="mono"></span><div class="legend-items"><span><i class="sun-key"></i>Sun</span><span><i class="earth-key"></i>Earth</span><span><i class="hidden-key"></i>Blocked</span></div></div>
+<div class="inspector-toolbar"><div class="legend-items"><span><i class="sun-key"></i>Sun</span><span><i class="earth-key"></i>Earth</span><span><i class="hidden-key"></i>Blocked</span></div></div>
 <div class="timeline" id="timeline"></div>
 <details class="interval-details"><summary>Exact visibility intervals / UTC</summary><div id="interval-table"></div></details>
 </section>
@@ -143,7 +154,8 @@
 </div>
 
 <section id="search-view" role="tabpanel" aria-labelledby="tab-search" class="secondary-view" hidden>
-<div class="panel"><div class="panel-head"><h2>Find sites &amp; start dates</h2></div>
+<div class="search-body">
+<div class="panel search-form-panel"><div class="panel-head"><h2>Find sites &amp; start dates</h2></div>
 <form id="search-form" class="search-controls" novalidate>
 <div class="field"><label for="search-from">First start date / UTC</label><input id="search-from" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-search-from" role="alert"></span></div>
 <div class="field"><label for="search-until">Last start date / UTC</label><input id="search-until" type="date" min="2000-01-01" max="2050-12-31" value="2027-01-17" required><span class="field-error" id="error-search-until" role="alert"></span></div>
@@ -158,7 +170,6 @@
 </form>
 <p class="data-note search-height">Search uses horizons precomputed for an instrument height of 0 m; the height field does not apply here.</p>
 </div>
-<div class="search-body">
 <div class="panel search-map-panel"><div class="panel-head"><h2>Acceptable start dates / site grid</h2><span id="search-count"></span></div>
 <div class="search-map" id="search-map"><svg id="search-grid" viewBox="-160 -160 320 320" role="img" aria-label="Share of acceptable start dates on a 5 km polar grid"></svg><div id="search-overlay" class="search-overlay" role="status" hidden></div></div>
 <div class="map-legend"><span>Acceptable start dates</span><span class="share-ramp"></span><span>0% → 100%</span><span>5 km squares · dots: no acceptable start</span></div>

@@ -34,7 +34,7 @@
   const st = { marker: null, pins: [], hover: false, ptr: { x: 0, y: 0 }, space: false, drag: null, pan: null, menuUV: null, lastWheel: 0 };
 
   function size() { const r = el.map.getBoundingClientRect(); return { w: r.width, h: r.height }; }
-  function base() { const z = size(); return Math.min(z.w, z.h); }
+  function base() { const z = size(); return Math.min(z.w, z.h); }   // zoom 1: the whole raster fits
   function clampV(v) {
     const z = size(), S = base() * v.s, hw = z.w / 2 / S, hh = z.h / 2 / S;
     v.cu = S <= z.w ? 0.5 : Math.min(1 - hw, Math.max(hw, v.cu));
@@ -71,6 +71,12 @@
     animateTo({ s: V.s * Math.min(z.w / Math.abs(x1 - x0), z.h / Math.abs(y1 - y0)), cu: c.u, cv: c.v });
   }
   function resetView() { pushHist(); animateTo({ s: 1, cu: 0.5, cv: 0.5 }); }
+  // The 154 km working zone, with a small margin, fills the map.
+  function zoneView() { pushHist(); animateTo({ s: HALF_KM / (rhoOfArc(ZONE_KM) + 6), cu: 0.5, cv: 0.5 }); }
+  function toggleHelp(show) {
+    const on = show == null ? el.help.hidden : show;
+    el.help.hidden = !on; el.helpBtn.setAttribute('aria-expanded', String(on));
+  }
   function prevView() { if (hist.length) animateTo(hist.pop()); render(); }
   function panBy(dx, dy) { cancelAnim(); const S = base() * V.s; V.cu -= dx / S; V.cv -= dy / S; clampV(V); render(); }
 
@@ -209,7 +215,7 @@
       // A plain vertical wheel scrolls the page, by design.
     }, { passive: false });
     window.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { if (st.drag) { st.drag = null; el.selbox.classList.remove('on'); } closeMenu(); return; }
+      if (e.key === 'Escape') { toggleHelp(false); if (st.drag) { st.drag = null; el.selbox.classList.remove('on'); } closeMenu(); return; }
       if (typing(e)) return;
       if (e.code === 'Space' && st.hover) { st.space = true; map.classList.add('space-pan'); e.preventDefault(); return; }
       if (st.space && e.key.startsWith('Arrow')) {
@@ -225,13 +231,15 @@
     el.zoomOut.addEventListener('click', () => zoomCenter(1 / 1.5));
     el.reset.addEventListener('click', resetView);
     el.prev.addEventListener('click', prevView);
+    el.zone.addEventListener('click', zoneView);
+    el.helpBtn.addEventListener('click', () => toggleHelp());
     window.addEventListener('resize', () => { clampV(V); render(); });
   }
 
   function init(o) {
     opts = o;
     for (const [k, id] of Object.entries({ map: 'map', world: 'world', grid: 'grid', marker: 'marker', pinLayer: 'pin-layer', labelLayer: 'label-layer',
-      ctx: 'ctx', selbox: 'selbox', readout: 'readout', zoomIn: 'zoom-in', zoomOut: 'zoom-out', reset: 'zoom-reset', prev: 'zoom-prev' })) el[k] = document.getElementById(id);
+      ctx: 'ctx', selbox: 'selbox', readout: 'readout', zoomIn: 'zoom-in', zoomOut: 'zoom-out', reset: 'zoom-reset', prev: 'zoom-prev', zone: 'zoom-zone', help: 'map-help', helpBtn: 'map-help-toggle' })) el[k] = document.getElementById(id);
     el.pinNodes = [];
     el.shade = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     el.shade.setAttribute('class', 'zone-shade'); el.shade.setAttribute('aria-hidden', 'true');

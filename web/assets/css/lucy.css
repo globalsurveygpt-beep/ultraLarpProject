@@ -611,13 +611,6 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 .data-note.search-height{margin-top:0}
 /* Assessment and Daily geometry side by side: same height. */
 .results-section > .assessment-panel, .results-section > .geometry-panel { align-self: stretch; }
-/* Nearest acceptable window, under the assessment. */
-.next-window{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px;border-top:1px solid var(--line);font-size:12px}
-.next-window[hidden]{display:none}
-.next-window-label{font:10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-.next-window b{font:500 13px var(--mono);color:var(--met-color)}
-.next-window button{margin-left:auto;font-size:11px}
-[data-stale=true] .next-window{opacity:.5}
 /* Example scenarios above the mission form. */
 .presets{padding:12px 20px;border-bottom:1px solid var(--line)}
 .presets[hidden]{display:none}
@@ -625,12 +618,91 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 .presets-head small{text-transform:none;letter-spacing:0;font:11px var(--sans);cursor:help}
 .preset-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .preset-buttons button{display:flex;gap:8px;align-items:center;min-width:0;text-align:left;font-size:11px;padding:7px 9px;background:transparent}
-.preset-buttons button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-buttons button span{min-width:0;line-height:1.3}
 .preset-buttons button b{font:500 11px var(--mono);color:var(--sun-color)}
-/* Window search: square zone map on the left, top 10 on the right at the same height. */
-.search-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:stretch;margin-bottom:24px}
+/* Site analysis: a square map (the whole raster) as large as the screen height allows, up to
+   55% of the width; the setup panel takes the rest, so no empty band appears on either side. */
+@media(min-width:901px){
+  .setup-stage{--map-side:min(55vw,max(420px,calc(100svh - 212px)))}
+  .setup-stage .layout{grid-template-columns:var(--map-side) minmax(0,1fr)}
+  .setup-stage .analysis-column{align-self:stretch;display:flex}
+  .setup-stage .setup-panel{flex:1;display:flex;flex-direction:column}
+  .setup-stage .setup-panel #mission-form{flex:1;display:flex;flex-direction:column}
+  .setup-stage .setup-panel .form-actions{margin-top:auto}
+}
+/* Wide setup panel: location and interval on the left, profile on the right, scenarios in one row. */
+@media(min-width:1280px){
+  .setup-stage .setup-panel #mission-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr 1fr auto}
+  .setup-stage #mission-form .location-group{grid-column:1;grid-row:1}
+  .setup-stage #mission-form .interval-group{grid-column:1;grid-row:2}
+  .setup-stage #mission-form .profile-group{grid-column:2;grid-row:1 / 3;border-left:1px solid var(--line)}
+  .setup-stage #mission-form .form-actions{grid-column:1 / -1;grid-row:3}
+  .preset-buttons{grid-template-columns:repeat(4,minmax(0,1fr))}
+  /* The panel is as tall as the map: roomier fields instead of an empty gap. */
+  .setup-stage .presets{padding:14px 20px}
+  .setup-stage .preset-buttons button{padding:10px 12px;font-size:12px}
+  .setup-stage .setup-panel #mission-form fieldset{padding:18px 22px;gap:14px 16px}
+  .setup-stage .setup-panel .group-title{font-size:13px}
+  .setup-stage .setup-panel label{font-size:12px;margin-bottom:6px}
+  .setup-stage .setup-panel input{height:44px;font-size:14px}
+  .setup-stage .setup-panel .unit-input > span:not(.field-error){top:13px}
+  .setup-stage .setup-panel .hint{font-size:11.5px}
+  .setup-stage .setup-panel .form-actions{padding:16px 22px}
+  .setup-stage .setup-panel .form-actions .primary{padding:14px;font-size:14px}
+}
+.setup-stage .map-status{padding:6px 12px;font-size:10px}
+/* Map controls: "Zone" and "?" under the zoom buttons; the help opens over the map. */
+.zoom-tools .zone-button{font:9px var(--mono);letter-spacing:.3px}
+.map .map-help{position:absolute;left:12px;right:64px;bottom:12px;margin:0;padding:10px 12px;border:1px solid #555;background:#111111f0;font-size:11px;line-height:1.7;color:var(--muted);display:block}
+.map .map-help[hidden]{display:none}
+.map .map-help b{color:var(--ink);font-weight:500}
+#map-help-toggle[aria-expanded=true]{background:var(--ink);color:var(--bg)}
+/* Nearest acceptable window: its own section, a minimal assessment of the window it found. */
+.results-section > .next-panel{grid-column:1/-1;margin:0}
+.next-panel[hidden],.next-detail[hidden],.next-text[hidden]{display:none}
+.next-text{margin:0;padding:14px 16px;font-size:12px;color:var(--muted)}
+.next-text[data-kind=ok]{color:var(--met-color)}
+.next-period{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.next-period strong{font:500 14px var(--mono)}
+.next-period button{margin-left:auto;font-size:11px}
+.next-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.next-metrics > div{padding:10px 16px;min-width:0}
+.next-metrics > div + div{border-left:1px solid var(--line)}
+.next-metrics small{display:block;font-size:11px;color:var(--muted)}
+.next-metrics strong{display:block;margin:4px 0 2px;font:20px var(--mono);color:var(--body-color)}
+.next-metrics span{font:10px var(--mono);color:var(--muted)}
+.next-metrics .meter{margin:8px 0 0}
+.next-metrics .meter i{background:var(--body-color)}
+.next-timeline{padding:4px 16px 12px;border-top:1px solid var(--line)}
+.next-timeline .track-row{margin:8px 0}
+.next-timeline .track{height:10px}
+.next-timeline .track i:not(.off){background:var(--body-color)}
+[data-stale=true] .next-panel{opacity:.5}
+@media(max-width:760px){.next-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.next-metrics > div:nth-child(3){border-left:0}.next-metrics > div:nth-child(n+3){border-top:1px solid var(--line)}}
+/* Window search: zone map on the left; search settings above the top 10 on the right. */
+.search-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:12px;margin-bottom:24px}
 .search-body > .panel{margin:0;display:flex;flex-direction:column;min-width:0}
+.search-body > .search-map-panel{grid-column:1;grid-row:1 / 3}
+.search-body > .search-form-panel{grid-column:2;grid-row:1}
+.search-body > .search-top-panel{grid-column:2;grid-row:2}
 .search-body .search-map{height:auto;aspect-ratio:1/1}
+.search-form-panel .search-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;padding:12px}
+.search-form-panel .search-controls .field{width:auto;margin:0;min-width:0}
+.search-form-panel .search-controls > button{grid-column:1;margin:0;align-self:end}
+.search-form-panel .search-controls .hint{grid-column:2 / -1;max-width:none;margin:0;align-self:center}
+.search-form-panel .search-height{margin:0;padding:0 12px 12px}
 .search-top-panel .search-table-wrap{flex:1 1 0;min-height:0;contain:size;overflow:auto}
 .search-top-panel .search-table-wrap table{min-width:820px}
-@media(max-width:1000px){.search-body{grid-template-columns:minmax(0,1fr)}.search-top-panel .search-table-wrap{flex:none;contain:none;max-height:520px}}
+@media(max-width:1000px){
+  .search-body{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .search-body > .search-map-panel,.search-body > .search-form-panel,.search-body > .search-top-panel{grid-column:1;grid-row:auto}
+  .search-top-panel .search-table-wrap{flex:none;contain:none;max-height:520px}
+}
+@media(max-width:600px){.search-form-panel .search-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.search-form-panel .search-controls .hint{grid-column:1 / -1}}
+/* Window search on a wide screen: the square map is exactly as high as the screen allows. */
+@media(min-width:1001px){
+  .search-body{--sq:max(360px,calc(100svh - 270px));grid-template-columns:calc(var(--sq) + 2px) minmax(0,1fr);margin-bottom:12px}
+  .search-body .search-map{aspect-ratio:auto;height:var(--sq)}
+  .search-form-panel .search-controls{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .search-form-panel .search-controls .hint{grid-column:2 / -1}
+}

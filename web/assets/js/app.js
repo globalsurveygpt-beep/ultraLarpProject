@@ -19,7 +19,7 @@ const SHARED = { duration: 'search-duration', night: 'search-night', gap: 'searc
 const TITLES = { max_night_h: 'Longest night', min_sun_pct: 'Sun share', max_comms_gap_h: 'Longest comms gap' };
 
 const state = {
-  meta: null, result: null, next: null, presets: null, dirty: false, pinned: [], view: 'site', surface: 'map', searchRows: [], sortKey: 'share', sortAsc: false,
+  meta: null, result: null, minute: 0, next: null, presets: null, dirty: false, pinned: [], view: 'site', surface: 'map', searchRows: [], sortKey: 'share', sortAsc: false,
   calls: {},            // name -> AbortController of the request in flight
 };
 
@@ -164,7 +164,7 @@ function paintWindow(r, c) {
     $('explanation').textContent = 'Terrain coverage is insufficient here; this is not a failed mission constraint.';
     clear.forEach(id => { $(id).innerHTML = ''; });
     $('instant-state').textContent = 'No terrain data'; $('epoch').textContent = '—'; $('instant-meta').textContent = '';
-    $('cursor').disabled = true; $('report-context').textContent = '';
+    state.minute = 0; $('report-context').textContent = '';
     return;
   }
   $('verdict').textContent = r.status === 'acceptable' ? 'Acceptable' : 'Not acceptable';
@@ -188,27 +188,35 @@ function paintWindow(r, c) {
   $('report-meta').textContent = r.status === 'acceptable' ? 'ACCEPTABLE' : 'NOT ACCEPTABLE';
   $('report-context').textContent = 'Site ' + c.lat.toFixed(4) + '°, ' + c.lon.toFixed(4) + '° · window ' + utc(start) + ' UTC · ' + num(c.days) + ' d';
   const len = end - start;
-  $('timeline').innerHTML = ['sun', 'earth'].map(key => `<div class="track-row" data-body="${key}"><span>${key.toUpperCase()}</span><div class="track" aria-label="${key} visibility intervals">`
-    + r.intervals[key].map(i => {
-      const a = Date.parse(i.start_utc), b = Date.parse(i.end_utc), label = (i.visible ? 'Visible' : 'Blocked') + ' · ' + utc(a) + ' — ' + utc(b) + ' UTC';
-      return `<button type="button" class="interval ${i.visible ? '' : 'off'}" style="flex:${b - a}" data-minute="${(a - start) / MINUTE}" aria-label="${key} ${label}" title="${label}"></button>`;
-    }).join('') + '</div></div>').join('')
-    + `<div class="ticks">${[0, .25, .5, .75, 1].map(f => '<span>' + dateOf(start + len * f).slice(5) + '</span>').join('')}</div>`;
-  $('timeline').querySelectorAll('[data-minute]').forEach(b => { b.onclick = () => { $('cursor').value = b.dataset.minute; inspect(); }; });
+  $('timeline').innerHTML = timelineHtml(r, true);
+  $('timeline').querySelectorAll('[data-minute]').forEach(b => { b.onclick = () => { state.minute = Number(b.dataset.minute); inspect(); }; });
   $('interval-table').innerHTML = '<table><thead><tr><th>Body / state</th><th>Start / UTC</th><th>End / UTC</th></tr></thead><tbody>'
     + ['sun', 'earth'].flatMap(k => r.intervals[k].map(i => `<tr><td>${k.toUpperCase()} · ${i.visible ? 'Visible' : 'Blocked'}</td><td>${utc(Date.parse(i.start_utc))}</td><td>${utc(Date.parse(i.end_utc))}</td></tr>`)).join('')
     + '</tbody></table>';
-  $('cursor').max = Math.max(0, Math.round(len / MINUTE) - 1); $('cursor').value = 0; $('cursor').disabled = false;
+  state.minute = 0;
   $('chart-day').value = dateOf(start);
   inspect(); renderCharts(); updateContext();
 }
 
-// Geometry at the cursor: /api/instant, a short pause after the slider stops.
+/* Sun and Earth visibility bands over a window. A click on an interactive band shows the geometry at its start. */
+function timelineHtml(r, interactive) {
+  const start = Date.parse(r.window.start_utc), len = Date.parse(r.window.end_utc) - start;
+  return ['sun', 'earth'].map(key => `<div class="track-row" data-body="${key}"><span>${key.toUpperCase()}</span><div class="track" aria-label="${key} visibility intervals">`
+    + r.intervals[key].map(i => {
+      const a = Date.parse(i.start_utc), b = Date.parse(i.end_utc), label = (i.visible ? 'Visible' : 'Blocked') + ' · ' + utc(a) + ' — ' + utc(b) + ' UTC';
+      return interactive
+        ? `<button type="button" class="interval ${i.visible ? '' : 'off'}" style="flex:${b - a}" data-minute="${(a - start) / MINUTE}" aria-label="${key} ${label}" title="${label}"></button>`
+        : `<i class="${i.visible ? '' : 'off'}" style="flex:${b - a}" title="${label}"></i>`;
+    }).join('') + '</div></div>').join('')
+    + `<div class="ticks">${[0, .25, .5, .75, 1].map(f => '<span>' + dateOf(start + len * f).slice(5) + '</span>').join('')}</div>`;
+}
+
+// Geometry at the selected minute: /api/instant, after a short pause.
 function inspect() {
   if (!state.result || state.result.r.data_status !== 'ok') return;
-  const { r, c } = state.result, ms = Date.parse(r.window.start_utc) + Number($('cursor').value) * MINUTE;
+  const { r, c } = state.result, ms = Date.parse(r.window.start_utc) + state.minute * MINUTE;
   if (window.Site3D && state.surface === '3d') window.Site3D.setTime(iso(ms));
-  $('epoch').textContent = utc(ms); $('cursor-label').textContent = utc(ms) + ' UTC'; $('instant-meta').textContent = utc(ms) + ' UTC';
+  $('epoch').textContent = utc(ms); $('instant-meta').textContent = utc(ms) + ' UTC';
   clearTimeout(inspect.t);
   inspect.t = setTimeout(async () => {
     try {
@@ -267,26 +275,42 @@ function explainTerrain(d) {
 
 // ---------- nearest acceptable window (POST /api/next-window) ----------
 function runNextWindow(r, c) {
-  const box = $('next-window'), text = $('next-window-text'), open = $('next-window-open');
+  const panel = $('next-panel'), text = $('next-window-text');
+  const say = (msg, kind = '') => { text.textContent = msg; text.hidden = !msg; text.dataset.kind = kind; $('next-detail').hidden = true; };
   if (state.calls.next) state.calls.next.abort();
-  state.next = null; open.hidden = true; box.dataset.kind = '';
-  if (r.data_status !== 'ok') { box.hidden = true; return; }
-  box.hidden = false;
-  if (r.status === 'acceptable') { text.textContent = 'This window already meets all thresholds.'; box.dataset.kind = 'ok'; return; }
+  state.next = null; $('next-state').textContent = '';
+  if (r.data_status !== 'ok') { panel.hidden = true; return; }
+  panel.hidden = false;
+  if (r.status === 'acceptable') { say('The selected window already meets all thresholds.', 'ok'); $('next-state').textContent = 'CURRENT WINDOW'; return; }
   // Landing windows are for missions that can still fly: no search from a past start date.
-  if (c.start < todayUtc()) { text.textContent = 'Nearest-window search is available for missions starting today or later.'; return; }
-  text.textContent = 'Searching the next 5 years…';
+  if (c.start < todayUtc()) { say('Nearest-window search is available for missions starting today or later.'); return; }
+  say('Searching start times over the next 5 years…');
+  $('next-state').textContent = 'SEARCHING';
   call('next', s => Api.nextWindow({ lat_deg: c.lat, lon_deg: c.lon, from_utc: startUtc(c), profile: profileOf(c) }, s)).then(n => {
     if (!n) return;
-    if (n.data_status !== 'ok') { text.textContent = 'No terrain data for this site.'; return; }
-    if (n.found) {
-      state.next = n.window;
-      text.innerHTML = '<b>' + utc(Date.parse(n.window.window.start_utc)) + ' UTC</b>';
-      box.dataset.kind = 'ok'; open.hidden = false;
-    } else {
-      text.textContent = 'No acceptable window (searched ' + utc(Date.parse(n.query.from_utc)) + ' → ' + utc(Date.parse(n.query.to_utc)) + ' UTC).';
-    }
-  }).catch(e => { text.textContent = e.message; });
+    const searched = utc(Date.parse(n.query.from_utc)) + ' → ' + utc(Date.parse(n.query.to_utc)) + ' UTC';
+    $('next-state').textContent = 'SEARCHED ' + searched;
+    if (n.data_status !== 'ok') { say('No terrain data for this site.'); return; }
+    if (!n.found) { say('No acceptable window (searched ' + searched + ').'); return; }
+    state.next = n.window;
+    paintNextWindow(n.window);
+  }).catch(e => { say(e.message); $('next-state').textContent = ''; });
+}
+// Minimal version of the assessment for the found window: period, the three criteria, Earth share, bands.
+function paintNextWindow(w) {
+  const start = Date.parse(w.window.start_utc), end = Date.parse(w.window.end_utc), days = Math.round((end - start) / DAY * 100) / 100;
+  $('next-window-text').hidden = true;
+  $('next-period').textContent = utc(start) + ' → ' + utc(end) + ' UTC · ' + num(days) + ' d';
+  const cells = w.criteria.map(x => {
+    const body = x.key === 'max_comms_gap_h' ? 'earth' : 'sun', width = Math.min(100, 100 * x.value / Math.max(x.limit, x.unit === 'pct' ? 100 : 1));
+    return `<div data-body="${body}"><small>${TITLES[x.key]}</small><strong>${num(x.value)}${unitOf(x)}</strong>`
+      + `<span>Limit ${x.kind === 'max' ? '≤' : '≥'} ${num(x.limit)}${unitOf(x)} · margin ${x.margin >= 0 ? '+' : ''}${num(x.margin)}</span><div class="meter"><i style="width:${width}%"></i></div></div>`;
+  });
+  cells.push(`<div data-body="earth"><small>Earth visibility share</small><strong>${num(w.metrics.comms_pct)}%</strong>`
+    + `<span>Without Earth ${num(w.metrics.comms_down_h)} h in total</span><div class="meter"><i style="width:${Math.min(100, w.metrics.comms_pct)}%"></i></div></div>`);
+  $('next-metrics').innerHTML = cells.join('');
+  $('next-timeline').innerHTML = timelineHtml(w, false);
+  $('next-detail').hidden = false;
 }
 // The found window was computed by the same code as a single assessment: show it on this page.
 async function openNextWindow() {
@@ -474,7 +498,7 @@ function showSite3D() {
 }
 function currentTime() {
   if (!state.result) return null;
-  return iso(Date.parse(state.result.r.window.start_utc) + Number($('cursor').value) * MINUTE);
+  return iso(Date.parse(state.result.r.window.start_utc) + state.minute * MINUTE);
 }
 function saveProfile() {
   const c = config();
@@ -541,7 +565,6 @@ $('view-results').onclick = scrollToResults;
 $('next-window-open').onclick = openNextWindow;
 $('view-map').onclick = () => setSurface('map');
 $('view-3d').onclick = () => { if (!showSite3D()) notify('Run the assessment first: the site view shows the calculated site.'); };
-$('cursor').oninput = inspect;
 $('chart-day').addEventListener('change', renderCharts);
 $('grid-toggle').onchange = e => MapView.setGrid(e.target.checked);
 $('labels-toggle').onchange = e => MapView.setLabels(e.target.checked);
