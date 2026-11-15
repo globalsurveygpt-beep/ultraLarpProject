@@ -34,7 +34,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from core import config, mission, search
-from core.datasets import DATASETS
+from core.datasets import DATASETS, locate
 from core.mission import ProfileError
 
 MAX_PARALLEL = 2
@@ -86,7 +86,7 @@ def _object(body, key: str) -> dict:
 
 
 def missing_files() -> list[str]:
-    return [d.filename for d in DATASETS if not (config.data_dir() / d.filename).is_file()]
+    return [d.filename for d in DATASETS if locate(d) is None]
 
 
 def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: int = MAX_PARALLEL) -> FastAPI:

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from core import config
-from core.datasets import DATASETS, by_key, path_of
+from core.datasets import DATASETS, by_key, locate, path_of
 
 
 def test_manifest_has_five_files():
@@ -51,3 +51,42 @@ def test_data_dir_from_environment(monkeypatch, tmp_path):
 
 def test_path_of_with_explicit_base():
     assert path_of("constants", Path("/x")) == Path("/x") / "pck00011.tpc"
+
+
+# ---------- file name variants ----------
+
+TERRAIN = by_key("terrain")
+
+
+@pytest.mark.parametrize("name", ["LDEM_80S_80MPP_ADJ.TIF", "LDEM_80S_80MPP_ADJ.tif",
+                                  "LDEM_80S_80MPP_ADJ.tiff", "LDEM_80S_80MPP_ADJ.TIFF",
+                                  "ldem_80s_80mpp_adj.Tiff"])
+def test_terrain_found_under_any_tiff_name(tmp_path, name):
+    (tmp_path / name).write_bytes(b"x")
+    assert locate(TERRAIN, tmp_path) == tmp_path / name
+    assert path_of("terrain", tmp_path) == tmp_path / name
+
+
+def test_exact_name_wins_over_a_variant(tmp_path):
+    for name in ("LDEM_80S_80MPP_ADJ.tiff", "LDEM_80S_80MPP_ADJ.TIF"):
+        (tmp_path / name).write_bytes(b"x")
+    assert locate(TERRAIN, tmp_path).name == "LDEM_80S_80MPP_ADJ.TIF"
+
+
+@pytest.mark.parametrize("name", ["LDEM_80S_80MPP_ADJ.TIF.part", "LDEM_80S_80MPP_ADJ.img",
+                                  "LDEM_80S_80MPP_ADJ (1).tiff", "LDEM_80S_20MPP_ADJ.TIF"])
+def test_other_files_are_not_the_terrain(tmp_path, name):
+    (tmp_path / name).write_bytes(b"x")
+    assert locate(TERRAIN, tmp_path) is None
+    assert path_of("terrain", tmp_path) == tmp_path / "LDEM_80S_80MPP_ADJ.TIF"
+
+
+def test_only_tiff_gets_the_extension_variant(tmp_path):
+    (tmp_path / "DE440S.BSP").write_bytes(b"x")
+    (tmp_path / "pck00011.tpcc").write_bytes(b"x")
+    assert locate(by_key("ephemeris"), tmp_path) == tmp_path / "DE440S.BSP"  # case only
+    assert locate(by_key("constants"), tmp_path) is None
+
+
+def test_missing_folder_finds_nothing(tmp_path):
+    assert locate(TERRAIN, tmp_path / "nope") is None

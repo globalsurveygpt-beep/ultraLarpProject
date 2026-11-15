@@ -8,14 +8,14 @@ import numpy as np
 import pytest
 
 from core import config, mission
-from core.datasets import DATASETS
+from core.datasets import DATASETS, locate
 from core.ephemeris import utc
 from core.mission import MissionProfile, ProfileError
 from core.terrain import InsufficientData
 from core.visibility import Interval, WindowMetrics, WindowResult
 
 START = utc(2026, 11, 14)
-HAVE_DATA = all((config.data_dir() / d.filename).is_file() for d in DATASETS)
+HAVE_DATA = all(locate(d) is not None for d in DATASETS)
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="terrain or JPL files are not in the data folder")
 
 

@@ -20,12 +20,12 @@ import uvicorn
 
 from api import main as api_main
 from core import config, mission
-from core.datasets import DATASETS
+from core.datasets import DATASETS, locate
 from core.ephemeris import check_times
 from core.horizon import HorizonProfile
 from core.terrain import InsufficientData
 
-HAVE_DATA = all((config.data_dir() / d.filename).is_file() for d in DATASETS)
+HAVE_DATA = all(locate(d) is not None for d in DATASETS)
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="terrain or JPL files are not in the data folder")
 
 

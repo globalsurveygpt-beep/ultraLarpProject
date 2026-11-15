@@ -14,14 +14,14 @@ import numpy as np
 import pytest
 
 from core import config, horizon as horizon_mod, mission, search
-from core.datasets import DATASETS
+from core.datasets import DATASETS, locate
 from core.ephemeris import check_times, utc
 from core.horizon import HorizonProfile
 from core.mission import MissionProfile, ProfileError
 from core.terrain import InsufficientData
 
 START = utc(2026, 11, 14)
-HAVE_DATA = all((config.data_dir() / d.filename).is_file() for d in DATASETS)
+HAVE_DATA = all(locate(d) is not None for d in DATASETS)
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="terrain or JPL files are not in the data folder")
 
 

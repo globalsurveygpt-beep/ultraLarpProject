@@ -301,3 +301,17 @@ def test_lola_horizon_near_the_pole(lola):
 def test_lola_outside_the_working_zone_is_insufficient_data(lola):
     with pytest.raises(InsufficientData):
         compute(lola, -84.0, 0.0)  # 183 km from the pole: the 150 km circle leaves the raster
+
+
+def test_fingerprint_ignores_tiff_name_variants(tmp_path):
+    z = np.zeros(grid()[0].shape)
+    a = Terrain(write_raster(tmp_path / "LDEM_80S_80MPP_ADJ.tiff", z))
+    b_dir = tmp_path / "b"
+    b_dir.mkdir()
+    b = Terrain(write_raster(b_dir / "LDEM_80S_80MPP_ADJ.TIF", z))
+    c = Terrain(write_raster(b_dir / "other.tif", z))
+    try:
+        assert a.fingerprint == b.fingerprint == f"LDEM_80S_80MPP_ADJ.TIF:{a.path.stat().st_size}"
+        assert c.fingerprint.startswith("other.tif:")
+    finally:
+        a.close(), b.close(), c.close()

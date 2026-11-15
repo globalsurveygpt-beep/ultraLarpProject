@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from core import config, ephemeris, visibility
-from core.datasets import DATASETS
+from core.datasets import DATASETS, locate
 from core.ephemeris import check_times, utc
 from core.horizon import HorizonProfile
 
@@ -21,7 +21,7 @@ R_KM = config.MOON_RADIUS_M / 1000.0
 START = utc(2026, 11, 14)
 MIN = timedelta(minutes=1)
 
-HAVE_DATA = all((config.data_dir() / d.filename).is_file() for d in DATASETS)
+HAVE_DATA = all(locate(d) is not None for d in DATASETS)
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="terrain or JPL files are not in the data folder")
 
 
