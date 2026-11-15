@@ -1,0 +1,28 @@
+/* Local date-picker enhancement. Date values stay ISO strings in native date inputs. */
+(function(){
+ 'use strict';
+ const DAY=86400000,monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ let active=null,popup=null,month=null;
+ const format=d=>d.toISOString().slice(0,10),parse=s=>new Date(s+'T00:00:00Z');
+ function close(restore=false){if(!active)return;const input=active.input;active.button.setAttribute('aria-expanded','false');popup?.remove();popup=null;active=null;if(restore)input.focus();}
+ function allowed(input,s){return (!input.min||s>=input.min)&&(!input.max||s<=input.max);}
+ function moveMonth(delta){month=new Date(Date.UTC(month.getUTCFullYear(),month.getUTCMonth()+delta,1));render();}
+ function render(){
+  if(!active)return;const input=active.input,y=month.getUTCFullYear(),m=month.getUTCMonth(),first=new Date(Date.UTC(y,m,1)),offset=(first.getUTCDay()+6)%7,start=first.getTime()-offset*DAY;
+  const selected=input.value,today=format(new Date()),label=monthNames[m]+' '+y;
+  popup.innerHTML='<div class="date-picker-head"><button type="button" data-month="-1" aria-label="Previous month">‹</button><span>'+label+'</span><button type="button" data-month="1" aria-label="Next month">›</button></div><div class="date-picker-week" aria-hidden="true">'+['Mo','Tu','We','Th','Fr','Sa','Su'].map(s=>'<span>'+s+'</span>').join('')+'</div><div class="date-picker-grid" role="group" aria-label="'+label+'">'+Array.from({length:42},(_,i)=>{const d=new Date(start+i*DAY),s=format(d),out=d.getUTCMonth()!==m;return '<button type="button" data-date="'+s+'" class="'+(out?'outside ':'')+(s===selected?'selected ':'')+(s===today?'today':'')+'" aria-label="'+s+'" '+(!allowed(input,s)?'disabled':'')+' '+(s===selected?'aria-pressed="true"':'')+'>'+d.getUTCDate()+'</button>';}).join('')+'</div>';
+  const prev=popup.querySelector('[data-month="-1"]'),next=popup.querySelector('[data-month="1"]');
+  prev.disabled=!!input.min&&format(new Date(Date.UTC(y,m,0)))<input.min;next.disabled=!!input.max&&format(new Date(Date.UTC(y,m+1,1)))>input.max;
+  popup.querySelectorAll('[data-month]').forEach(b=>b.onclick=()=>moveMonth(+b.dataset.month));
+  popup.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{input.value=b.dataset.date;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));close(true);});
+  const current=popup.querySelector('[data-date="'+selected+'"]:not(:disabled)')||popup.querySelector('[data-date]:not(:disabled)');current?.focus();
+ }
+ function open(input,button){close();const base=input.value||input.min||format(new Date());month=parse(base);if(!Number.isFinite(month.getTime()))month=new Date();month.setUTCDate(1);active={input,button};button.setAttribute('aria-expanded','true');popup=document.createElement('div');popup.className='date-picker';popup.setAttribute('role','dialog');popup.setAttribute('aria-label','Choose date');popup.id='lucy-date-picker';document.body.appendChild(popup);render();
+  const r=input.getBoundingClientRect(),width=280,height=320;popup.style.left=Math.max(8,Math.min(r.left,window.innerWidth-width-8))+'px';popup.style.top=(r.bottom+height+8<window.innerHeight?r.bottom+6:Math.max(8,r.top-height-6))+'px';
+  popup.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close(true);return;}if(e.key==='PageUp'||e.key==='PageDown'){e.preventDefault();const delta=e.key==='PageUp'?-1:1;if(!popup.querySelector('[data-month="'+delta+'"]').disabled)moveMonth(delta);return;}const target=e.target.closest('[data-date]');if(!target)return;let delta={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(e.key==='Home')delta=-(parse(target.dataset.date).getUTCDay()+6)%7;if(e.key==='End')delta=6-(parse(target.dataset.date).getUTCDay()+6)%7;if(delta===undefined)return;e.preventDefault();const s=format(new Date(parse(target.dataset.date).getTime()+delta*DAY));if(!allowed(input,s))return;const d=parse(s);if(d.getUTCMonth()!==month.getUTCMonth()||d.getUTCFullYear()!==month.getUTCFullYear()){month=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1));render();}popup.querySelector('[data-date="'+s+'"]')?.focus();};
+ }
+ document.querySelectorAll('input[type=date]').forEach(input=>{const wrap=document.createElement('div');wrap.className='date-field';input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);const button=document.createElement('button');button.type='button';button.className='date-picker-toggle';button.setAttribute('aria-label','Choose '+(document.querySelector('label[for="'+input.id+'"]')?.textContent||'date'));button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M6 2v4m8-4v4M3 8h14M6 11h2m3 0h2m-7 3h2"/></svg>';wrap.appendChild(button);button.onclick=()=>{if(active?.input===input)close(true);else open(input,button);};input.addEventListener('click',e=>{e.preventDefault();open(input,button);});input.onkeydown=e=>{if(e.key==='Enter'||(e.altKey&&e.key==='ArrowDown')){e.preventDefault();open(input,button);}};});
+ document.addEventListener('pointerdown',e=>{if(active&&!popup.contains(e.target)&&!active.button.contains(e.target))close();});
+ document.addEventListener('focusin',e=>{if(active&&!popup.contains(e.target)&&e.target!==active.input&&!active.button.contains(e.target))close();});
+ window.addEventListener('resize',()=>close());document.addEventListener('scroll',e=>{if(active&&!popup.contains(e.target))close();},true);
+})();
