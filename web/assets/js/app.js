@@ -644,11 +644,22 @@ enableSite3D();
 MapView.setMarker(config().lat, config().lon);
 $('search-results').innerHTML = '<div class="empty"><h2>Search the supported region</h2><p>Choose the start-date period and a region, then press Search.</p></div>';
 loadMeta();
+// Example scenario A if assets/presets.json cannot be loaded: the same site as scenario A in that file,
+// on the default mission already in the form (14 days from 2026-12-18, 40 h, 24 h, 50 %).
+const FALLBACK_SCENARIO = { id: 'A', lat_deg: -85.8795, lon_deg: 0.0 };
+function applyFallbackScenario() {
+  $('lat').value = FALLBACK_SCENARIO.lat_deg; $('lon').value = FALLBACK_SCENARIO.lon_deg;
+  syncShared(false); clearErrors(); updateEnd(); updateContext(); saveProfile();
+  MapView.setMarker(FALLBACK_SCENARIO.lat_deg, FALLBACK_SCENARIO.lon_deg);
+  state.preset = FALLBACK_SCENARIO.id; markPreset();
+  runFromForm('load');
+}
 // The page opens with a result, not an empty dashboard: the saved site if there is one,
-// otherwise example scenario A.
+// otherwise example scenario A (from presets.json, or the built-in copy if that file is unavailable).
 loadPresets().then(() => {
   if (location.hash === '#search') return;
   if (state.hadSite) runFromForm('load');
   else if (state.presets) applyPreset(state.presets.scenarios[0], 'load');
+  else applyFallbackScenario();
 });
 if (location.hash === '#search') setView('search');
