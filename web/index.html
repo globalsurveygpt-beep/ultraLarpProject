@@ -226,7 +226,7 @@
 <div class="panel-head"><h2>Method, data &amp; sources</h2><button id="close-sources">Close ×</button></div>
 <div class="dialog-content">
 <h3>What LUCY calculates</h3>
-<p>For a site and a mission window, LUCY checks minute by minute whether the Sun is visible (power) and whether the Earth is visible (direct communication), then compares the longest night, the Sun share and the longest communication gap with the mission's thresholds. The calculation is deterministic and reproducible, with no AI. It shows landing windows that meet the thresholds; it does not guarantee mission success.</p>
+<p>For a site and a mission window, LUCY checks minute by minute whether the Sun is visible (power) and whether the Earth is visible (direct communication), then compares the longest night, the Sun share and the longest communication gap with the mission's thresholds. The calculation is deterministic and reproducible, with no SI. It shows landing windows that meet the thresholds; it does not guarantee mission success.</p>
 <h3>How visibility is decided</h3>
 <p>Terrain horizon: for every site, the highest terrain elevation angle in 720 directions (0.5° each) out to 150 km, computed from the LOLA elevation model on the lunar sphere. A body is visible when its altitude is above the terrain horizon in its own direction. Sun and Earth positions come from the JPL DE440 ephemeris in the lunar body-fixed frame (MOON_ME), computed locally with Skyfield.</p>
 <h3>Check against JPL Horizons</h3>
