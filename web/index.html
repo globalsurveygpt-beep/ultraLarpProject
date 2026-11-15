@@ -159,6 +159,21 @@
 <section class="panel"><div class="panel-head"><h2>Window report</h2><span id="report-meta"></span></div><table><thead><tr><th>Quantity</th><th>Value</th><th>Unit</th></tr></thead><tbody id="report"></tbody></table><p class="data-note" id="report-context"></p></section>
 </div>
 </section>
+<section class="panel check-panel" id="horizons-check" aria-label="Check against JPL Horizons">
+<div class="panel-head"><h2>Check against JPL Horizons</h2><span>54 directions · largest difference 0.000022°</span></div>
+<p class="check-intro">LUCY's Sun and Earth directions compared with JPL Horizons, NASA JPL's reference ephemeris service (apparent, airless, observer on the lunar surface): 3 sites, Sun and Earth, 9 times between 2000 and 2050. Every direction agrees within 0.000022°; the check limit is 0.01°. Sample for 2026-11-14 00:00 UTC, each cell Horizons / LUCY in degrees:</p>
+<div class="table-scroll"><table class="check-table">
+<thead><tr><th>Site</th><th>Body</th><th>Azimuth</th><th>Altitude</th><th>Difference</th></tr></thead>
+<tbody>
+<tr><td>-89.5°, 0.0° E</td><td>Sun</td><td>126.6273 / 126.6273</td><td>1.2583 / 1.2583</td><td>&lt; 0.000001</td></tr>
+<tr><td>-89.5°, 0.0° E</td><td>Earth</td><td>358.7734 / 358.7734</td><td>-4.1485 / -4.1486</td><td>0.000019</td></tr>
+<tr><td>-85.5°, 90.0° E</td><td>Sun</td><td>36.7755 / 36.7755</td><td>5.1654 / 5.1654</td><td>&lt; 0.000001</td></tr>
+<tr><td>-85.5°, 90.0° E</td><td>Earth</td><td>269.1226 / 269.1226</td><td>-4.7309 / -4.7309</td><td>0.000019</td></tr>
+<tr><td>-87.0°, -120.0° E</td><td>Sun</td><td>246.5713 / 246.5713</td><td>0.3647 / 0.3647</td><td>&lt; 0.000001</td></tr>
+<tr><td>-87.0°, -120.0° E</td><td>Earth</td><td>118.5366 / 118.5366</td><td>-6.0865 / -6.0866</td><td>0.000019</td></tr>
+</tbody></table></div>
+<p class="data-note">This checks body directions; the terrain horizon is not part of it. Horizons values fetched 2026-11-14 (Horizons uses DE441). Reproduce: <code>python scripts/verify_ephemeris.py</code>; reference file <code>tests/fixtures/horizons_reference.json</code>.</p>
+</section>
 </div>
 
 <section id="search-view" role="tabpanel" aria-labelledby="tab-search" class="secondary-view" hidden>
