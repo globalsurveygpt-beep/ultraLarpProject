@@ -264,6 +264,22 @@ def test_cache_returns_the_stored_profile(tmp_path, monkeypatch):
     assert again.ground_height_m == first.ground_height_m
 
 
+def test_on_demand_sites_go_to_a_capped_cache_and_the_grid_cache_is_left_alone(tmp_path, monkeypatch):
+    monkeypatch.setenv("LUNAR_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setattr(horizon, "EXTRA_CACHE_LIMIT", 3)
+    t = flat(tmp_path)
+    grid = horizon.cache_dir()
+    horizon.horizon(t, *SITE, radius_m=5_000, folder=grid)           # what precompute_horizons.py does
+    for i in range(6):                                               # six visitors, six different sites
+        horizon.horizon(t, SITE[0], SITE[1] + 0.001 * i, radius_m=5_000)
+    assert len(list(grid.glob("*.npz"))) == 1
+    assert len(list(horizon.extra_cache_dir().glob("*.npz"))) == 3
+    # a site that is in the grid cache is found there and not written again
+    before = {p.name for p in horizon.extra_cache_dir().glob("*.npz")}
+    horizon.horizon(t, *SITE, radius_m=5_000)
+    assert {p.name for p in horizon.extra_cache_dir().glob("*.npz")} == before
+
+
 def test_cache_key_depends_on_every_input(tmp_path):
     t = flat(tmp_path)
     base = dict(lat_deg=-89.9, lon_deg=30.0, observer_height_m=0.0, radius_m=5000.0, step_deg=0.5)

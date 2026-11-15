@@ -251,6 +251,37 @@ def test_without_data_compute_is_503_and_meta_still_works():
         assert status == 200 and m["data"]["present"] is False
 
 
+class SlowSource(FixedSource):
+    """The first calculation holds its slot until `release` is set."""
+
+    def __init__(self):
+        super().__init__()
+        self.started, self.release = threading.Event(), threading.Event()
+
+    def vectors_km(self, times_utc):
+        self.started.set()
+        self.release.wait(timeout=30)
+        return super().vectors_km(times_utc)
+
+
+def test_a_request_that_waits_too_long_for_a_slot_gets_a_503(monkeypatch):
+    monkeypatch.setattr(mission, "horizon", fake_horizon)
+    source = SlowSource()
+    app = api_main.create_app(FakeTerrain(), source, load_data=False, max_parallel=1, queue_timeout_s=0.5)
+    with Server(app) as s:
+        first = {}
+        worker = threading.Thread(target=lambda: first.update(zip(("status", "body"), s.call("/api/window", WINDOW))))
+        worker.start()
+        assert source.started.wait(timeout=10)
+        status, r = s.call("/api/window", WINDOW)                    # no slot is free
+        assert status == 503 and "busy" in r["error"]["message"]
+        source.release.set()
+        worker.join(timeout=30)
+        assert first["status"] == 200                                # the first request was not harmed
+        status, _ = s.call("/api/window", WINDOW)                    # and the slot is free again
+        assert status == 200
+
+
 def test_parse_time():
     assert api_main.parse_time("2026-11-14", "t").isoformat() == "2026-11-14T00:00:00+00:00"
     assert api_main.parse_time("2026-11-14T06:30:00Z", "t").hour == 6

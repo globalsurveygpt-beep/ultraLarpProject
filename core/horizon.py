@@ -22,6 +22,7 @@ Only the tangent is compared per pixel; the arctangent is taken once per sector.
 import hashlib
 import json
 import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -162,8 +163,40 @@ def _spread_near(terrain, best, x, y, az, t, east, north, step_deg, n_sectors):
 
 # ---------- disk cache ----------
 
+# Two cache folders. The grid folder holds the search grid (scripts/precompute_horizons.py) and is
+# never trimmed. Sites that visitors ask for one by one go to the "extra" folder, which keeps only
+# the EXTRA_CACHE_LIMIT most recently written entries (a few KB each), so arbitrary coordinates
+# cannot fill the disk. Lookups without an explicit folder read both.
+EXTRA_CACHE_LIMIT = 2000
+_trim_lock = threading.Lock()
+
+
 def cache_dir() -> Path:
+    """The grid cache (precomputed, permanent)."""
     return config.data_dir() / "cache" / "horizons"
+
+
+def extra_cache_dir() -> Path:
+    """The cache of on-demand sites (capped, see EXTRA_CACHE_LIMIT)."""
+    return config.data_dir() / "cache" / "horizons-extra"
+
+
+def trim_cache(folder: Path, limit: int | None = None) -> int:
+    """Delete the oldest entries beyond `limit`; returns how many were removed."""
+    limit = EXTRA_CACHE_LIMIT if limit is None else limit
+    with _trim_lock:
+        try:
+            files = sorted(folder.glob("*.npz"), key=lambda p: p.stat().st_mtime)
+        except OSError:
+            return 0
+        removed = 0
+        for path in files[:max(0, len(files) - limit)]:
+            try:
+                path.unlink()
+                removed += 1
+            except OSError:
+                pass
+        return removed
 
 
 def cache_key(terrain: Terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg) -> str:
@@ -213,16 +246,28 @@ def horizon(terrain: Terrain, lat_deg: float, lon_deg: float, observer_height_m:
             radius_m: float = config.HORIZON_RADIUS_M, step_deg: float = config.AZIMUTH_STEP_DEG,
             folder: Path | None = None) -> HorizonProfile:
     """compute() with a disk cache. "Insufficient data" is cached too, so a site outside
-    the terrain is not recomputed."""
+    the terrain is not recomputed.
+
+    With an explicit `folder` that folder is read and written as it is. Without one, the grid
+    cache and then the extra cache are read, and a new profile is written to the extra cache,
+    which is kept within EXTRA_CACHE_LIMIT entries."""
+    explicit = folder is not None
     args = (terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, folder)
     profile = cached(*args)
+    if profile is None and not explicit:
+        profile = cached(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, extra_cache_dir())
     if profile is not None:
         return profile
-    path = _cache_path(*args)
+    target = folder if explicit else extra_cache_dir()
+    path = _cache_path(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, target)
     try:
         profile = compute(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg)
     except InsufficientData as e:
         _write(path, insufficient=np.array(True), reason=np.array(str(e)))
+        if not explicit:
+            trim_cache(target)
         raise
     _write(path, elevation_deg=profile.elevation_deg, ground_height_m=profile.ground_height_m)
+    if not explicit:
+        trim_cache(target)
     return profile

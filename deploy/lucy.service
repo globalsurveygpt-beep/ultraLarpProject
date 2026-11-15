@@ -1,0 +1,19 @@
+[Unit]
+Description=LUCY API and interface
+After=network.target
+
+[Service]
+User=lucy
+WorkingDirectory=/home/lucy/ultraLarpProject
+Environment=PYTHONUNBUFFERED=1
+# One process: the terrain raster (about 230 MB) and the in-memory search horizons belong to it.
+# Calculations are limited to two at a time inside the app (api/main.py).
+ExecStart=/home/lucy/ultraLarpProject/.venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+MemoryMax=4G
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

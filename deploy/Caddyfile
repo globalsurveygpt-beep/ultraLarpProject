@@ -1,0 +1,42 @@
+# Caddy in front of the LUCY API (uvicorn on 127.0.0.1:8000). Caddy gets and renews the
+# HTTPS certificate by itself. Put the site name in /etc/caddy/Caddyfile in place of {$LUCY_HOST},
+# or set LUCY_HOST in the environment of the caddy service.
+#
+# Caching: the API is never cached; pages, scripts and styles are revalidated on every use (the
+# server answers 304 with an ETag, so a new deploy shows at once, also behind Cloudflare);
+# images and the vendored Three.js may be kept for a day.
+
+{$LUCY_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	request_body {
+		max_size 64KB
+	}
+
+	handle /api/* {
+		header Cache-Control "no-store"
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle /assets/img/* {
+		header Cache-Control "public, max-age=86400"
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle /assets/js/vendor/* {
+		header Cache-Control "public, max-age=86400"
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle {
+		header Cache-Control "no-cache"
+		reverse_proxy 127.0.0.1:8000
+	}
+}

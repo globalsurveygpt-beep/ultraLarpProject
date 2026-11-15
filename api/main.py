@@ -22,7 +22,8 @@ terrain is a normal 200 response with data_status "insufficient_data".
 Terrain and ephemeris load once at startup; the precomputed search horizons are read into
 memory in a background thread, so the server answers at once and a search made before that
 finishes reads the rest from disk. Heavy calculations run in the thread pool,
-at most MAX_PARALLEL at a time; further requests wait for a free slot.
+at most MAX_PARALLEL at a time; further requests wait up to QUEUE_TIMEOUT_S for a free slot
+and then get a 503 "busy" instead of piling up.
 If a `web/` folder exists in the repository, it is served at `/` (same origin, no CORS).
 """
 
@@ -40,6 +41,7 @@ from core.datasets import DATASETS, locate
 from core.mission import ProfileError
 
 MAX_PARALLEL = 2
+QUEUE_TIMEOUT_S = 25.0      # longest wait for a free calculation slot before a 503 "busy"
 MAX_COMPARE_SITES = 3
 WEB_DIR = config.REPO_ROOT / "web"
 DATE_ONLY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -91,7 +93,8 @@ def missing_files() -> list[str]:
     return [d.filename for d in DATASETS if locate(d) is None]
 
 
-def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: int = MAX_PARALLEL) -> FastAPI:
+def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: int = MAX_PARALLEL,
+               queue_timeout_s: float = QUEUE_TIMEOUT_S) -> FastAPI:
     """Build the application. Tests pass their own terrain and direction source."""
     state = {"terrain": terrain, "source": source, "load_error": None, "store": None}
     slots = threading.BoundedSemaphore(max_parallel)
@@ -145,8 +148,12 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
             detail = f"missing data files: {', '.join(missing)}. " if missing else ""
             raise ApiError(503, None, f"data not loaded. {detail}Run: python scripts/fetch_data.py"
                            + (f" ({state['load_error']})" if state["load_error"] else ""))
-        with slots:
+        if not slots.acquire(timeout=queue_timeout_s):
+            raise ApiError(503, None, "the server is busy with other calculations; try again in a few seconds")
+        try:
             return fn(state["terrain"], state["source"], *args)
+        finally:
+            slots.release()
 
     @app.get("/api/meta")
     def meta():
