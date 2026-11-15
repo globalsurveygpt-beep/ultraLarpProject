@@ -38,7 +38,7 @@ def _init():
 def _work(site):
     lat, lon = site
     try:
-        horizon.horizon(_terrain, lat, lon, 0.0)
+        horizon.horizon(_terrain, lat, lon, 0.0, folder=horizon.cache_dir())
         return "ok"
     except InsufficientData:
         return "insufficient"
