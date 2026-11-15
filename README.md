@@ -50,7 +50,7 @@ Near the lunar south pole the Sun skims the horizon, and terrain casts long shad
 
 ## How it works
 
-The calculation is deterministic and reproducible. It uses no AI and no estimates by eye.
+The calculation of Sun and Earth visibility and landing windows is deterministic and reproducible. It uses no AI and no estimates by eye.
 
 1. **Terrain and horizon preparation:** a horizon profile is computed once per point from a lunar elevation raster.
 2. **Calculation core:** for a point and a moment in time, checks whether the Sun and Earth are above the local horizon.
@@ -99,7 +99,7 @@ The tool shows allowed landing windows based on illumination and Earth visibilit
 
 ## Use of AI
 
-The code, tests and documentation of this project were written with the help of AI, under our direction: the goals, the rules and every decision were set by the team, and we reviewed the results. The calculation itself contains no AI. It is plain, deterministic mathematics on real data, and the same inputs always give the same result.
+The code, tests and documentation of this project were written with the help of AI, under our direction: the goals, the rules and every decision were set by the team, and we reviewed the results. The calculation of Sun and Earth visibility, night length, communication gaps and landing windows contains no AI. It is plain, deterministic mathematics on real data (LOLA terrain and JPL ephemerides), and the same inputs always give the same result.
 
 ## Run locally
 
