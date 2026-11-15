@@ -219,6 +219,71 @@ def test_period_must_end_inside_the_date_range(monkeypatch):
         search.run(FakeTerrain(), ScriptedSource(), utc(2050, 12, 20), utc(2050, 12, 25), {"duration_days": 14})
 
 
+# ---------- in-memory horizons and shared minute vectors ----------
+
+def test_merged_spans():
+    d = timedelta(days=2)
+    starts = [START + timedelta(days=5), START, START + timedelta(days=1), START + d]
+    spans = search.merged_spans(starts, 2)
+    # START..+2d, +1d..+3d and +2d..+4d overlap or touch; +5d stands alone
+    assert spans == [(START, 4 * 24 * 60), (START + timedelta(days=5), 2 * 24 * 60)]
+
+
+class RecordingSource(ScriptedSource):
+    def __init__(self):
+        super().__init__(lambda m: (m // 97) % 3 == 0)
+        self.points = 0
+
+    def vectors_km(self, times_utc):
+        self.points += len(times_utc)
+        return super().vectors_km(times_utc)
+
+
+def test_window_vectors_equal_direct_calls():
+    from core.visibility import window_times
+    starts = [START + timedelta(hours=h) for h in (0, 5, 5, 30, 200)]
+    source = RecordingSource()
+    shared = search.window_vectors(source, starts, 2)
+    assert source.calls == 2  # 0, 5 and 30 h overlap; 200 h does not
+    assert source.points == (30 * 60 + 2 * 1440) + 2 * 1440
+    for start in starts:
+        direct = ScriptedSource(source.sun_hidden).vectors_km(window_times(start, 2))
+        assert set(shared[start]) == set(direct)
+        for body in direct:
+            assert np.array_equal(shared[start][body], direct[body])
+
+
+def test_store_keeps_found_sites_and_rechecks_missing_ones(monkeypatch):
+    reads = []
+    inner = fake_cache(missing={(-89.0, 0.0)}, insufficient={(-88.0, 0.0)})
+
+    def counting(terrain, lat, lon, *a, **k):
+        reads.append((lat, lon))
+        return inner(terrain, lat, lon, *a, **k)
+
+    monkeypatch.setattr(horizon_mod, "cached", counting)
+    store = search.HorizonStore(FakeTerrain())
+    for _ in range(3):
+        assert store.get(-87.0, 0.0).lat_deg == -87.0
+        assert store.get(-89.0, 0.0) is None
+        with pytest.raises(InsufficientData):
+            store.get(-88.0, 0.0)
+    assert reads.count((-87.0, 0.0)) == 1 and reads.count((-88.0, 0.0)) == 1
+    assert reads.count((-89.0, 0.0)) == 3  # not computed yet: looked up again each time
+    assert len(store) == 2
+
+
+def test_search_with_store_matches_search_without(monkeypatch):
+    monkeypatch.setattr(horizon_mod, "cached", fake_cache(insufficient={search.grid_sites(COARSE)[1]}))
+    source = ScriptedSource(lambda m: (m // 300) % 4 == 0)
+    store = search.HorizonStore(FakeTerrain())
+    assert store.preload(COARSE) == len(search.grid_sites(COARSE))
+    args = (FakeTerrain(), source, START, START + timedelta(days=3), PERMISSIVE, None)
+    plain = search.run(*args, step_m=COARSE)
+    held = search.run(*args, step_m=COARSE, store=store)
+    assert held == plain and plain["grid"]["sites_insufficient_data"] == 1
+
+
 # ---------- real data ----------
 
 @needs_data

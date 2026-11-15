@@ -16,7 +16,10 @@ Ranking uses the thresholds' own quantities, no combined score:
   best start, then grid order.
 
 Horizons come from the cache only (see scripts/precompute_horizons.py), computed for an
-instrument height of 0 m, so the search accepts only observer_height_m = 0.
+instrument height of 0 m, so the search accepts only observer_height_m = 0. A HorizonStore
+keeps them in memory, so a server reads the cache files once instead of on every request.
+The 1-minute Sun and Earth vectors of all candidate windows are computed in one pass over
+the merged time spans the windows cover, then sliced per window.
 The grid is pure geometry: points every step on the south polar stereographic plane of
 the reference sphere, kept when their great-circle distance from the pole is within the
 working zone. The same function feeds the precompute script, so cache keys match.
@@ -32,7 +35,7 @@ from core import config, horizon as horizon_mod
 from core.ephemeris import DirectionSource, check_times, time_grid
 from core.mission import MODEL, MissionProfile, ProfileError, build_response, _iso, _num
 from core.terrain import InsufficientData, Terrain
-from core.visibility import series_from_vectors, window_from_vectors, window_times
+from core.visibility import series_from_vectors, window_from_vectors
 
 NOTE = ("Map shares come from hourly sampling of start times; "
         "top results are recomputed at 1-minute resolution.")
@@ -40,6 +43,48 @@ NOTE = ("Map shares come from hourly sampling of start times; "
 
 class SearchUnavailable(Exception):
     """No precomputed horizons for the requested region."""
+
+
+class HorizonStore:
+    """Cached horizons held in memory.
+
+    A site found on disk (a profile, or "insufficient data") is kept; a site not computed
+    yet is looked up on disk again next time, so a precompute that runs later is picked up.
+    Reads and writes of a dict are safe across request threads.
+    """
+
+    _INSUFFICIENT = "insufficient"
+
+    def __init__(self, terrain: Terrain, folder: Path | None = None):
+        self.terrain, self.folder = terrain, folder
+        self._sites: dict = {}
+
+    def get(self, lat_deg: float, lon_deg: float):
+        key = (lat_deg, lon_deg)
+        hit = self._sites.get(key)
+        if hit is None:
+            try:
+                hit = horizon_mod.cached(self.terrain, lat_deg, lon_deg, 0.0, folder=self.folder)
+            except InsufficientData:
+                hit = self._INSUFFICIENT
+            if hit is None:
+                return None
+            self._sites[key] = hit
+        if hit is self._INSUFFICIENT:
+            raise InsufficientData("terrain does not cover this site (cached)")
+        return hit
+
+    def preload(self, step_m: float = config.SEARCH_GRID_STEP_M) -> int:
+        """Read every grid site from the cache; returns how many are now held."""
+        for lat, lon in grid_sites(step_m):
+            try:
+                self.get(lat, lon)
+            except InsufficientData:
+                pass
+        return len(self._sites)
+
+    def __len__(self):
+        return len(self._sites)
 
 
 # ---------- grid and region ----------
@@ -144,6 +189,38 @@ def rank(screens: list[Screen | None]) -> list[int]:
 
 # ---------- the search ----------
 
+MINUTE = timedelta(minutes=config.TIME_STEP_MIN)
+
+
+def merged_spans(starts: list[datetime], duration_days: float) -> list[tuple[datetime, int]]:
+    """Windows [start, start + duration) merged where they overlap or touch:
+    (span start, number of 1-minute samples)."""
+    n = int(round(duration_days * 24 * 60 / config.TIME_STEP_MIN))
+    spans = []
+    for start in sorted(set(starts)):
+        end = start + n * MINUTE
+        if spans and start <= spans[-1][1]:
+            spans[-1][1] = max(spans[-1][1], end)
+        else:
+            spans.append([start, end])
+    return [(a, int(round((b - a) / MINUTE))) for a, b in spans]
+
+
+def window_vectors(source: DirectionSource, starts: list[datetime], duration_days: float) -> dict:
+    """1-minute body vectors for each window start, from one source call per merged span.
+    Each value equals source.vectors_km(visibility.window_times(start, duration_days))."""
+    n = int(round(duration_days * 24 * 60 / config.TIME_STEP_MIN))
+    out = {}
+    for span_start, count in merged_spans(starts, duration_days):
+        vectors = source.vectors_km([span_start + i * MINUTE for i in range(count)])
+        span_end = span_start + count * MINUTE
+        for start in set(starts):
+            if span_start <= start < span_end:
+                i = int(round((start - span_start) / MINUTE))
+                out[start] = {body: v[i:i + n] for body, v in vectors.items()}
+    return out
+
+
 def parse_period(from_utc: datetime, to_utc: datetime, duration_days: float) -> int:
     """Validate the start period; return the number of start times."""
     if to_utc < from_utc:
@@ -156,7 +233,8 @@ def parse_period(from_utc: datetime, to_utc: datetime, duration_days: float) -> 
 
 def run(terrain: Terrain, source: DirectionSource, from_utc: datetime, to_utc: datetime,
         profile: MissionProfile | dict | None = None, region: dict | None = None,
-        cache_folder: Path | None = None, step_m: float = config.SEARCH_GRID_STEP_M) -> dict:
+        cache_folder: Path | None = None, step_m: float = config.SEARCH_GRID_STEP_M,
+        store: HorizonStore | None = None) -> dict:
     if not isinstance(profile, MissionProfile):
         profile = MissionProfile.from_dict(profile)
     if profile.observer_height_m != 0.0:
@@ -166,11 +244,16 @@ def run(terrain: Terrain, source: DirectionSource, from_utc: datetime, to_utc: d
     sample_h = config.SEARCH_START_STEP_H
     window_samples = int(round(profile.duration_days * 24.0 / sample_h))
 
+    if store is None:
+        def lookup(lat, lon):
+            return horizon_mod.cached(terrain, lat, lon, 0.0, folder=cache_folder)
+    else:
+        lookup = store.get
     sites = sites_in_region(grid_sites(step_m), region)
     profiles, insufficient = [], 0
     for lat, lon in sites:
         try:
-            p = horizon_mod.cached(terrain, lat, lon, 0.0, folder=cache_folder)
+            p = lookup(lat, lon)
         except InsufficientData:
             insufficient += 1
             continue
@@ -189,13 +272,14 @@ def run(terrain: Terrain, source: DirectionSource, from_utc: datetime, to_utc: d
         s = series_from_vectors(vectors, p)
         screens.append(screen(s["sun"].visible, s["earth"].visible, n_starts, window_samples, sample_h, profile))
 
-    top, minute_vectors = [], {}
-    for i in rank(screens)[:config.SEARCH_CANDIDATES]:
+    candidates = rank(screens)[:config.SEARCH_CANDIDATES]
+    starts = {i: from_utc + timedelta(hours=sample_h * screens[i].best_index) for i in candidates}
+    minute_vectors = window_vectors(source, list(starts.values()), profile.duration_days)
+    top = []
+    for i in candidates:
         if len(top) >= config.SEARCH_TOP:
             break
-        start = from_utc + timedelta(hours=sample_h * screens[i].best_index)
-        if start not in minute_vectors:
-            minute_vectors[start] = source.vectors_km(window_times(start, profile.duration_days))
+        start = starts[i]
         p = profiles[i]
         result = window_from_vectors(minute_vectors[start], p, start)
         response = build_response(p.lat_deg, p.lon_deg, start, profile, result, p.site_height_m, terrain.path.name)

@@ -17,7 +17,9 @@ Errors share one shape: {"error": {"field": ..., "message": ...}}.
 400 for bad input, 503 when the data files are not loaded. A site without enough
 terrain is a normal 200 response with data_status "insufficient_data".
 
-Terrain and ephemeris load once at startup. Heavy calculations run in the thread pool,
+Terrain and ephemeris load once at startup; the precomputed search horizons are read into
+memory in a background thread, so the server answers at once and a search made before that
+finishes reads the rest from disk. Heavy calculations run in the thread pool,
 at most MAX_PARALLEL at a time; further requests wait for a free slot.
 If a `web/` folder exists in the repository, it is served at `/` (same origin, no CORS).
 """
@@ -89,7 +91,7 @@ def missing_files() -> list[str]:
 
 def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: int = MAX_PARALLEL) -> FastAPI:
     """Build the application. Tests pass their own terrain and direction source."""
-    state = {"terrain": terrain, "source": source, "load_error": None}
+    state = {"terrain": terrain, "source": source, "load_error": None, "store": None}
     slots = threading.BoundedSemaphore(max_parallel)
 
     @asynccontextmanager
@@ -104,6 +106,9 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
                 state["source"] = state["source"] or SkyfieldSource()
             except (FileNotFoundError, OSError, ValueError) as e:
                 state["load_error"] = str(e)
+        if loaded_here:
+            state["store"] = search.HorizonStore(state["terrain"])
+            threading.Thread(target=state["store"].preload, name="horizon-preload", daemon=True).start()
         yield
         if loaded_here:  # close the raster in the thread that opened it
             state["terrain"].close()
@@ -182,7 +187,8 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
             raise ApiError(400, "region", "must be an object")
         profile = mission.MissionProfile.from_dict(_object(body, "profile"))
         try:
-            return compute(search.run, start, end, profile, region)
+            return compute(lambda t, src, *a: search.run(t, src, *a, store=state["store"]),
+                           start, end, profile, region)
         except search.SearchUnavailable as e:
             raise ApiError(503, None, str(e)) from None
 
