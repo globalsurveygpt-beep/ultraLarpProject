@@ -10,7 +10,8 @@ Pick a point near the lunar south pole and a date, and see whether a lander coul
 
 ## Demo
 
-- Live demo, video and screenshot: to be added at submission.
+- Live demo: https://lucy.guardcontract.app
+- Video and screenshot: to be added at submission.
 
 ## Problem
 
