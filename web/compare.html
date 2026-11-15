@@ -15,9 +15,9 @@
 <nav aria-label="Primary navigation"><div class="nav-links"><a href="index.html">Site analysis</a><a href="compare.html" aria-current="page">Comparison</a><a href="index.html#search">Window search</a></div></nav>
 <div class="header-tools"><span class="mode" id="data-state">Connecting…</span><button type="button" id="about">Method &amp; sources</button></div>
 </header>
-<div class="workspace-title"><div><h1>Compare candidate sites</h1></div><div class="tools"><button type="button" id="load-examples">Example sites</button><button type="button" id="add-site">+ Add third site</button></div></div>
+<div class="workspace-title"><div><h1>Compare sites</h1><p class="page-sub">Press + to add a site (A, B or C), then click its map to choose the point. Two sites are enough; the comparison updates by itself when a point or a setting changes.</p></div><div class="tools"><div class="view-switch" id="cmp-switch" role="group" aria-label="Site cards view"><button type="button" id="cmp-map" aria-pressed="true">Map</button><button type="button" id="cmp-3d" aria-pressed="false" hidden>3D view</button></div></div></div>
 <main>
-<section class="panel"><div class="panel-head"><h2>Shared mission profile</h2><span id="example-note">Example setup, not a recommendation.</span></div>
+<section class="panel"><div class="panel-head"><h2>Mission for every site</h2><span id="example-note">Example setup, not a recommendation.</span></div>
 <form id="compare-profile" class="compare-profile" novalidate>
 <div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-start" role="alert"></span></div>
 <div class="field"><label for="hour">Start hour [h UTC]</label><input id="hour" type="number" min="0" max="23" step="1" value="0" required><span class="field-error" id="error-hour" role="alert"></span></div>
@@ -26,9 +26,8 @@
 <div class="field"><label for="gap">Max comms gap [h]</label><input id="gap" type="number" min="0" step="any" value="24" required><span class="field-error" id="error-gap" role="alert"></span></div>
 <div class="field"><label for="sun">Min Sun [%]</label><input id="sun" type="number" min="0" max="100" step="any" value="50" required><span class="field-error" id="error-sun" role="alert"></span></div>
 <div class="field"><label for="height">Height [m]</label><input id="height" type="number" min="0" max="100" step="any" value="0" required><span class="field-error" id="error-height" role="alert"></span></div>
-<button class="primary" type="submit" id="compare-run">Compare sites →</button>
 </form></section>
-<form id="candidate-form" class="candidate-grid" aria-label="Candidate coordinates" novalidate></form>
+<div class="site-cards" id="site-cards"></div>
 <div class="comparison-summary"><h2>Window comparison</h2><span id="comparison-window" class="mono"></span></div>
 <div id="comparison-message" class="inline-message" role="status" hidden></div>
 <section class="panel comparison-matrix"><div id="comparison-matrix"></div></section>
@@ -67,9 +66,12 @@
 </div>
 </dialog>
 <div class="notification" id="notification" role="status" hidden></div>
+<script src="assets/js/features.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/store.js"></script>
+<script src="assets/js/map.js"></script>
 <script src="assets/js/compare.js"></script>
 <script src="assets/js/date-picker.js"></script>
+<script type="module" src="assets/js/site3d.js"></script>
 </body>
 </html>
