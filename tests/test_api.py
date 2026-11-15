@@ -172,6 +172,44 @@ def test_compare_computes_the_ephemeris_once(fake_server):
     assert fake_server.source.calls - before == 1
 
 
+SEARCH = {"from_utc": "2026-11-14", "to_utc": "2026-11-15", "profile": {"duration_days": 2},
+          "region": {"kind": "circle", "lat_deg": -89.5, "lon_deg": 0, "radius_km": 12}}
+
+
+def fake_cached(terrain, lat, lon, observer_height_m=0.0, folder=None, **kw):
+    return HorizonProfile(lat, lon, 0.0, 0.0, 150_000.0, 0.5, np.zeros(720))
+
+
+def test_search(fake_server, monkeypatch):
+    from core import horizon as horizon_mod
+    monkeypatch.setattr(horizon_mod, "cached", fake_cached)
+    status, r = fake_server.call("/api/search", SEARCH)
+    assert status == 200
+    assert list(r) == ["data_status", "query", "grid", "map", "top", "note", "meta"]
+    assert r["grid"]["step_km"] == 5 and r["grid"]["sites_checked"] == len(r["map"]) > 0
+    assert all(m["acceptable_pct"] == 0 for m in r["map"])  # the stand-in Earth is never visible
+    assert r["top"] == []
+
+
+def test_search_without_precomputed_horizons_is_503(fake_server, monkeypatch):
+    from core import horizon as horizon_mod
+    monkeypatch.setattr(horizon_mod, "cached", lambda *a, **k: None)
+    status, r = fake_server.call("/api/search", SEARCH)
+    assert status == 503 and "precompute_horizons.py" in r["error"]["message"]
+
+
+@pytest.mark.parametrize("change,field", [
+    ({"profile": {"observer_height_m": 2}}, "observer_height_m"),
+    ({"to_utc": "2027-03-01"}, "to_utc"),
+    ({"region": "zone"}, "region"),
+    ({"region": {"kind": "circle", "lat_deg": -89, "lon_deg": 0}}, "radius_km"),
+    ({"from_utc": None}, "from_utc"),
+])
+def test_search_bad_input(fake_server, change, field):
+    status, r = fake_server.call("/api/search", {**SEARCH, **change})
+    assert status == 400 and r["error"]["field"] == field
+
+
 # ---------- errors ----------
 
 @pytest.mark.parametrize("path,body,field", [

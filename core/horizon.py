@@ -177,24 +177,52 @@ def cache_key(terrain: Terrain, lat_deg, lon_deg, observer_height_m, radius_m, s
     return hashlib.sha256(json.dumps(fields, sort_keys=True).encode()).hexdigest()[:32]
 
 
+def _cache_path(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, folder) -> Path:
+    folder = folder or cache_dir()
+    return folder / (cache_key(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg) + ".npz")
+
+
+def _write(path: Path, **arrays) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f"{path.stem}.{os.getpid()}.tmp.npz")
+    np.savez(tmp, **arrays)
+    tmp.replace(path)
+
+
+def cached(terrain: Terrain, lat_deg: float, lon_deg: float, observer_height_m: float = 0.0,
+           radius_m: float = config.HORIZON_RADIUS_M, step_deg: float = config.AZIMUTH_STEP_DEG,
+           folder: Path | None = None) -> HorizonProfile | None:
+    """The cached profile, or None when the site has not been computed yet.
+    Raises InsufficientData when the cache records that the terrain does not cover the site."""
+    path = _cache_path(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, folder)
+    if not path.is_file():
+        return None
+    try:
+        with np.load(path) as f:
+            if "insufficient" in f.files and bool(f["insufficient"]):
+                raise InsufficientData(str(f["reason"]))
+            return HorizonProfile(lat_deg=float(lat_deg), lon_deg=float(lon_deg),
+                                  ground_height_m=float(f["ground_height_m"]),
+                                  observer_height_m=float(observer_height_m), radius_m=float(radius_m),
+                                  step_deg=float(step_deg), elevation_deg=f["elevation_deg"])
+    except (OSError, KeyError, ValueError):
+        return None  # unreadable entry: treated as not computed
+
+
 def horizon(terrain: Terrain, lat_deg: float, lon_deg: float, observer_height_m: float = 0.0,
             radius_m: float = config.HORIZON_RADIUS_M, step_deg: float = config.AZIMUTH_STEP_DEG,
             folder: Path | None = None) -> HorizonProfile:
-    """compute() with a disk cache. Results with insufficient data are not cached."""
-    folder = folder or cache_dir()
-    path = folder / (cache_key(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg) + ".npz")
-    if path.is_file():
-        try:
-            with np.load(path) as f:
-                return HorizonProfile(lat_deg=float(lat_deg), lon_deg=float(lon_deg),
-                                      ground_height_m=float(f["ground_height_m"]),
-                                      observer_height_m=float(observer_height_m), radius_m=float(radius_m),
-                                      step_deg=float(step_deg), elevation_deg=f["elevation_deg"])
-        except (OSError, KeyError, ValueError):
-            pass  # unreadable entry: recompute and overwrite
-    profile = compute(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg)
-    folder.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f"{path.stem}.{os.getpid()}.tmp.npz")
-    np.savez(tmp, elevation_deg=profile.elevation_deg, ground_height_m=profile.ground_height_m)
-    tmp.replace(path)
+    """compute() with a disk cache. "Insufficient data" is cached too, so a site outside
+    the terrain is not recomputed."""
+    args = (terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg, folder)
+    profile = cached(*args)
+    if profile is not None:
+        return profile
+    path = _cache_path(*args)
+    try:
+        profile = compute(terrain, lat_deg, lon_deg, observer_height_m, radius_m, step_deg)
+    except InsufficientData as e:
+        _write(path, insufficient=np.array(True), reason=np.array(str(e)))
+        raise
+    _write(path, elevation_deg=profile.elevation_deg, ground_height_m=profile.ground_height_m)
     return profile
