@@ -236,7 +236,7 @@ dialog::backdrop { background: #000b; }
 #comparison{overflow-x:auto}#comparison table{min-width:700px;table-layout:fixed}#comparison th:first-child,#comparison td:first-child{width:25%}#comparison td{vertical-align:top;font-size:11px;line-height:1.8;overflow-wrap:anywhere}#comparison th button{font-size:10px;padding:4px 8px;margin-top:8px}
 #search-view{overflow:visible;background:transparent;border:0}#search-view>.panel{margin-bottom:24px}.search-map-panel{margin-top:24px}
 .search-map{height:440px;position:relative;background:#090909}.search-map svg{display:block;width:100%;height:100%;padding:18px}
-.search-map svg circle[data-grid]{cursor:crosshair}.search-map svg circle[data-grid]:hover{stroke:white;stroke-width:1}
+.search-map svg [data-grid]{cursor:crosshair}.search-map svg [data-grid]:hover{stroke:white;stroke-width:.6}
 .search-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid #777;background:#111e;padding:20px 30px;text-align:center;pointer-events:none;max-width:90%}
 .search-overlay strong{display:block;font-size:16px;font-weight:500}.search-overlay small{display:block;color:var(--muted);margin-top:8px}
 .map-legend{padding:16px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;color:var(--muted);font-size:11px}.gray-ramp{height:8px;width:120px;background:linear-gradient(90deg,#303030,#f3f3f3)}
@@ -576,7 +576,7 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 
 /* ===== LUCY live interface: additions on top of the mockup stylesheet ===== */
 #data-state[data-kind=ok]{color:var(--met-color)}#data-state[data-kind=error]{color:var(--unmet-color)}
-.share-ramp{height:8px;width:120px;background:linear-gradient(90deg,rgb(58,52,40),rgb(216,187,121))}
+.share-ramp{height:8px;width:120px;background:linear-gradient(90deg,rgb(122,70,8),rgb(255,228,96))}
 .map .map-image{object-fit:fill;filter:none;transform:none}
 .zone-shade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .zone-shade path{fill:#000;fill-opacity:.42}
@@ -609,3 +609,28 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 .setup-panel .interval-group .group-title,.setup-panel .interval-group .hint{grid-column:1/-1}
 .search-map image{pointer-events:none}
 .data-note.search-height{margin-top:0}
+/* Assessment and Daily geometry side by side: same height. */
+.results-section > .assessment-panel, .results-section > .geometry-panel { align-self: stretch; }
+/* Nearest acceptable window, under the assessment. */
+.next-window{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px;border-top:1px solid var(--line);font-size:12px}
+.next-window[hidden]{display:none}
+.next-window-label{font:10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.next-window b{font:500 13px var(--mono);color:var(--met-color)}
+.next-window button{margin-left:auto;font-size:11px}
+[data-stale=true] .next-window{opacity:.5}
+/* Example scenarios above the mission form. */
+.presets{padding:12px 20px;border-bottom:1px solid var(--line)}
+.presets[hidden]{display:none}
+.presets-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;font:10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.presets-head small{text-transform:none;letter-spacing:0;font:11px var(--sans);cursor:help}
+.preset-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.preset-buttons button{display:flex;gap:8px;align-items:center;min-width:0;text-align:left;font-size:11px;padding:7px 9px;background:transparent}
+.preset-buttons button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-buttons button b{font:500 11px var(--mono);color:var(--sun-color)}
+/* Window search: square zone map on the left, top 10 on the right at the same height. */
+.search-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:stretch;margin-bottom:24px}
+.search-body > .panel{margin:0;display:flex;flex-direction:column;min-width:0}
+.search-body .search-map{height:auto;aspect-ratio:1/1}
+.search-top-panel .search-table-wrap{flex:1 1 0;min-height:0;contain:size;overflow:auto}
+.search-top-panel .search-table-wrap table{min-width:820px}
+@media(max-width:1000px){.search-body{grid-template-columns:minmax(0,1fr)}.search-top-panel .search-table-wrap{flex:none;contain:none;max-height:520px}}

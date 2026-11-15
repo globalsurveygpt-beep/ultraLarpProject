@@ -3,8 +3,8 @@
    window, blocked site data); then each page simply starts from its defaults. */
 (function () {
   'use strict';
-  const KEY = 'lucy-state-v1';
-  const PROFILE_KEYS = ['start', 'hour', 'days', 'night', 'gap', 'sun', 'height', 'vehicle'];
+  const KEY = 'lucy-state-v2';
+  const PROFILE_KEYS = ['start', 'hour', 'days', 'night', 'gap', 'sun', 'height'];
 
   function load() {
     try {

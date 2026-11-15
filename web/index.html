@@ -67,6 +67,7 @@
 
 <div class="analysis-column">
 <section class="panel setup-panel"><div class="panel-head"><h2>Mission setup</h2></div>
+<div class="presets" id="presets" hidden><div class="presets-head"><span>Example scenarios</span><small id="presets-note">Example scenarios, not recommendations.</small></div><div class="preset-buttons" id="preset-buttons" role="group" aria-label="Example scenarios"></div></div>
 <form id="mission-form" novalidate>
 <fieldset class="location-group">
 <legend>Observer location</legend>
@@ -81,7 +82,7 @@
 <fieldset class="interval-group">
 <legend>Mission interval / UTC</legend>
 <div class="group-title" aria-hidden="true">Mission interval / UTC</div>
-<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" value="2026-11-15" min="2000-01-01" max="2050-12-31" required><span class="field-error" id="error-start" role="alert"></span></div>
+<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" value="2026-12-18" min="2000-01-01" max="2050-12-31" required><span class="field-error" id="error-start" role="alert"></span></div>
 <div class="field"><label for="hour">Start hour</label><div class="unit-input"><input id="hour" type="number" min="0" max="23" step="1" value="0" required><span class="field-error" id="error-hour" role="alert"></span><span>h UTC</span></div></div>
 <div class="field"><label for="duration">Duration</label><div class="unit-input"><input id="duration" type="number" min="1" max="60" value="14" step="any" required><span class="field-error" id="error-duration" role="alert"></span><span>d</span></div></div>
 <p class="hint" id="interval-end"></p>
@@ -90,7 +91,6 @@
 <fieldset class="profile-group">
 <legend>Mission profile</legend>
 <div class="group-title" aria-hidden="true">Mission profile</div>
-<div class="field"><label for="vehicle">Vehicle type</label><input id="vehicle" type="text" maxlength="40" placeholder="Optional label"><span class="field-error" id="error-vehicle" role="alert"></span></div>
 <div class="field"><label for="height">Instrument height</label><div class="unit-input"><input id="height" type="number" min="0" max="100" value="0" step="any" required><span class="field-error" id="error-height" role="alert"></span><span>m</span></div></div>
 <div class="field"><label for="night">Maximum night</label><div class="unit-input"><input id="night" type="number" min="0" value="40" step="any" required><span class="field-error" id="error-night" role="alert"></span><span>h</span></div></div>
 <div class="field"><label for="gap">Maximum comms gap</label><div class="unit-input"><input id="gap" type="number" min="0" value="24" step="any" required><span class="field-error" id="error-gap" role="alert"></span><span>h</span></div></div>
@@ -116,6 +116,7 @@
 <div class="assessment"><div class="verdict" id="verdict">Not calculated yet</div><p id="explanation">Pick a site on the map or enter coordinates, then press Run assessment.</p></div>
 <div id="criteria" class="criteria-grid"></div>
 <div class="secondary-metrics" id="secondary-metrics"></div>
+<div class="next-window" id="next-window" role="status" hidden><span class="next-window-label">Nearest acceptable window</span><span id="next-window-text"></span><button type="button" id="next-window-open" hidden>Check in detail →</button></div>
 <div class="mini-meta" id="mini-meta"></div>
 </section>
 
@@ -128,7 +129,7 @@
 
 <section class="panel geometry-panel">
 <div class="panel-head"><h2>Daily geometry</h2><span id="geometry-meta">10 min steps</span></div>
-<div class="geometry-controls"><label for="chart-day">Inspect day / UTC</label><input id="chart-day" type="date" min="2000-01-01" max="2050-12-31" value="2026-11-15"><span>Solid: body altitude · Dashed: terrain horizon</span></div>
+<div class="geometry-controls"><label for="chart-day">Inspect day / UTC</label><input id="chart-day" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18"><span>Solid: body altitude · Dashed: terrain horizon</span></div>
 <div class="geometry-charts"><div data-body="sun"><h3>Sun</h3><div id="sun-chart"></div></div><div data-body="earth"><h3>Earth</h3><div id="earth-chart"></div></div></div>
 <p class="terrain-example" id="terrain-example"></p>
 </section>
@@ -144,22 +145,28 @@
 <section id="search-view" role="tabpanel" aria-labelledby="tab-search" class="secondary-view" hidden>
 <div class="panel"><div class="panel-head"><h2>Find sites &amp; start dates</h2></div>
 <form id="search-form" class="search-controls" novalidate>
-<div class="field"><label for="search-from">First start date / UTC</label><input id="search-from" type="date" min="2000-01-01" max="2050-12-31" value="2026-11-15" required><span class="field-error" id="error-search-from" role="alert"></span></div>
-<div class="field"><label for="search-until">Last start date / UTC</label><input id="search-until" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-15" required><span class="field-error" id="error-search-until" role="alert"></span></div>
+<div class="field"><label for="search-from">First start date / UTC</label><input id="search-from" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-search-from" role="alert"></span></div>
+<div class="field"><label for="search-until">Last start date / UTC</label><input id="search-until" type="date" min="2000-01-01" max="2050-12-31" value="2027-01-17" required><span class="field-error" id="error-search-until" role="alert"></span></div>
 <div class="field"><label for="search-region">Search region</label><select id="search-region"><option value="zone">Entire supported region</option><option value="circle">Circle around selected site</option></select></div>
 <div class="field" id="radius-field" hidden><label for="search-radius">Radius around selected site [km]</label><input id="search-radius" type="number" min="5" max="308" value="25" step="1"><span class="field-error" id="error-search-radius" role="alert"></span></div>
+<div class="field"><label for="search-duration">Duration</label><div class="unit-input"><input id="search-duration" type="number" min="1" max="60" value="14" step="any" required><span class="field-error" id="error-search-duration" role="alert"></span><span>d</span></div></div>
+<div class="field"><label for="search-night">Maximum night</label><div class="unit-input"><input id="search-night" type="number" min="0" value="40" step="any" required><span class="field-error" id="error-search-night" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="search-gap">Maximum comms gap</label><div class="unit-input"><input id="search-gap" type="number" min="0" value="24" step="any" required><span class="field-error" id="error-search-gap" role="alert"></span><span>h</span></div></div>
+<div class="field"><label for="search-sun">Minimum Sun share</label><div class="unit-input"><input id="search-sun" type="number" min="0" max="100" value="50" step="any" required><span class="field-error" id="error-search-sun" role="alert"></span><span>%</span></div></div>
 <button type="submit" id="search-button" class="primary">Search</button>
 <p id="search-context" class="hint"></p>
 </form>
 <p class="data-note search-height">Search uses horizons precomputed for an instrument height of 0 m; the height field does not apply here.</p>
 </div>
+<div class="search-body">
 <div class="panel search-map-panel"><div class="panel-head"><h2>Acceptable start dates / site grid</h2><span id="search-count"></span></div>
-<div class="search-map" id="search-map"><svg id="search-grid" viewBox="-170 -170 340 340" role="img" aria-label="Share of acceptable start dates on a 5 km polar grid"></svg><div id="search-overlay" class="search-overlay" role="status" hidden></div></div>
-<div class="map-legend"><span>Acceptable start dates</span><span class="share-ramp"></span><span>0% → 100%</span><span>5 km grid · hollow: no acceptable start</span></div>
+<div class="search-map" id="search-map"><svg id="search-grid" viewBox="-160 -160 320 320" role="img" aria-label="Share of acceptable start dates on a 5 km polar grid"></svg><div id="search-overlay" class="search-overlay" role="status" hidden></div></div>
+<div class="map-legend"><span>Acceptable start dates</span><span class="share-ramp"></span><span>0% → 100%</span><span>5 km squares · dots: no acceptable start</span></div>
 <div id="search-message" class="inline-message" role="status" hidden></div>
 <p class="data-note" id="search-note">Map: hourly screening · Top 10: minute resolution.</p>
 </div>
-<section class="panel"><div class="panel-head"><h2>Top 10 sites</h2></div><div id="search-results" class="search-table-wrap"></div></section>
+<section class="panel search-top-panel"><div class="panel-head"><h2>Top 10 sites</h2></div><div id="search-results" class="search-table-wrap"></div></section>
+</div>
 </section>
 </main>
 

@@ -32,7 +32,7 @@ The calculation is deterministic and reproducible. It uses no AI and no estimate
 
 1. **Terrain and horizon preparation:** a horizon profile is computed once per point from a lunar elevation raster.
 2. **Calculation core:** for a point and a moment in time, checks whether the Sun and Earth are above the local horizon.
-3. **Mission logic:** mission duration profiles and lists of allowed landing windows.
+3. **Mission logic:** one mission profile (duration, longest night, longest comms gap, minimum Sun share, instrument height) checked against each window; lists of acceptable landing windows.
 4. **API:** a thin FastAPI layer between the core and the interface.
 5. **Interface:** a flat polar map, a calendar, charts and comparison view.
 

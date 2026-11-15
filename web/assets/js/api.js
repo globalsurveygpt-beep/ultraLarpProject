@@ -47,5 +47,6 @@
     window: (body, signal) => request('POST', '/api/window', body, signal),
     compare: (body, signal) => request('POST', '/api/compare', body, signal),
     search: (body, signal) => request('POST', '/api/search', body, signal),
+    nextWindow: (body, signal) => request('POST', '/api/next-window', body, signal),
   };
 })();

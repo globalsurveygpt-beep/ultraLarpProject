@@ -14,14 +14,13 @@
 <main>
 <section class="panel"><div class="panel-head"><h2>Shared mission profile</h2><span id="example-note">Example setup, not a recommendation.</span></div>
 <form id="compare-profile" class="compare-profile" novalidate>
-<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" min="2000-01-01" max="2050-12-31" value="2026-11-15" required><span class="field-error" id="error-start" role="alert"></span></div>
+<div class="field"><label for="start">Start date / UTC</label><input id="start" type="date" min="2000-01-01" max="2050-12-31" value="2026-12-18" required><span class="field-error" id="error-start" role="alert"></span></div>
 <div class="field"><label for="hour">Start hour [h UTC]</label><input id="hour" type="number" min="0" max="23" step="1" value="0" required><span class="field-error" id="error-hour" role="alert"></span></div>
 <div class="field"><label for="days">Duration [d]</label><input id="days" type="number" min="1" max="60" step="any" value="14" required><span class="field-error" id="error-days" role="alert"></span></div>
 <div class="field"><label for="night">Max night [h]</label><input id="night" type="number" min="0" step="any" value="40" required><span class="field-error" id="error-night" role="alert"></span></div>
 <div class="field"><label for="gap">Max comms gap [h]</label><input id="gap" type="number" min="0" step="any" value="24" required><span class="field-error" id="error-gap" role="alert"></span></div>
 <div class="field"><label for="sun">Min Sun [%]</label><input id="sun" type="number" min="0" max="100" step="any" value="50" required><span class="field-error" id="error-sun" role="alert"></span></div>
 <div class="field"><label for="height">Height [m]</label><input id="height" type="number" min="0" max="100" step="any" value="0" required><span class="field-error" id="error-height" role="alert"></span></div>
-<div class="field"><label for="vehicle">Vehicle type</label><input id="vehicle" type="text" maxlength="40" placeholder="Optional label"><span class="field-error" id="error-vehicle" role="alert"></span></div>
 <button class="primary" type="submit" id="compare-run">Compare sites →</button>
 </form></section>
 <form id="candidate-form" class="candidate-grid" aria-label="Candidate coordinates" novalidate></form>

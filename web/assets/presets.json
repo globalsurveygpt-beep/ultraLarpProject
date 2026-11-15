@@ -1,0 +1,16 @@
+{
+  "note": "Example scenarios, not recommendations. Each one was checked at 1-minute resolution on LOLA 80 m terrain and DE440; tests/test_presets.py keeps the expected outcomes true.",
+  "start_utc": "2026-12-18T00:00:00Z",
+  "profile": {"duration_days": 14, "max_night_h": 40, "max_comms_gap_h": 24, "min_sun_pct": 50, "observer_height_m": 0},
+  "scenarios": [
+    {"id": "A", "label": "All thresholds met", "lat_deg": -85.8795, "lon_deg": 0.0,
+     "expect": {"status": "acceptable", "reason_code": "all_met"}},
+    {"id": "B", "label": "Sunlit, Earth hidden too long", "lat_deg": -88.4445, "lon_deg": -57.9946,
+     "expect": {"status": "not_acceptable", "reason_code": "max_comms_gap_h", "failed": ["max_comms_gap_h"]}},
+    {"id": "C", "label": "Earth in view, night too long", "lat_deg": -86.0135, "lon_deg": 7.125,
+     "expect": {"status": "not_acceptable", "reason_code": "max_night_h", "failed": ["max_night_h"]}},
+    {"id": "D", "label": "Not now, window later", "lat_deg": -85.4033, "lon_deg": -14.5345,
+     "expect": {"status": "not_acceptable", "reason_code": "max_night_h", "failed": ["max_night_h"],
+                "next_window_start_utc": "2026-12-18T18:00:00Z"}}
+  ]
+}

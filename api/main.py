@@ -33,7 +33,7 @@ from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from core import config, mission, patch, search
+from core import config, mission, nextwin, patch, search
 from core.datasets import DATASETS, locate
 from core.mission import ProfileError
 
@@ -167,6 +167,13 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
         start = parse_time(body.get("start_utc"), "start_utc")
         profile = mission.MissionProfile.from_dict(_object(body, "profile"))
         return compute(mission.assess_site, lat, lon, start, profile)
+
+    @app.post("/api/next-window")
+    def next_window(body: dict = Body(...)):
+        lat, lon = _number(body, "lat_deg"), _number(body, "lon_deg")
+        start = parse_time(body.get("from_utc"), "from_utc")
+        profile = mission.MissionProfile.from_dict(_object(body, "profile"))
+        return compute(nextwin.next_window, lat, lon, start, profile)
 
     @app.post("/api/compare")
     def compare(body: dict = Body(...)):

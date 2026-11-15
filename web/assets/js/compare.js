@@ -5,9 +5,9 @@
 const $ = id => document.getElementById(id);
 const Api = window.LucyApi, Store = window.LucyStore;
 const EXAMPLES = [{ lat: -88.9, lon: 43.2 }, { lat: -88.8, lon: 55.2 }, { lat: -88.7, lon: 67.2 }];  // example coordinates, not recommendations
-const PROFILE_IDS = ['start', 'hour', 'days', 'night', 'gap', 'sun', 'height', 'vehicle'];
+const PROFILE_IDS = ['start', 'hour', 'days', 'night', 'gap', 'sun', 'height'];
 // API request keys -> form ids, for showing the server's error at the right field.
-const FIELD_IDS = { start_utc: 'start', duration_days: 'days', max_night_h: 'night', max_comms_gap_h: 'gap', min_sun_pct: 'sun', observer_height_m: 'height', vehicle_type: 'vehicle' };
+const FIELD_IDS = { start_utc: 'start', duration_days: 'days', max_night_h: 'night', max_comms_gap_h: 'gap', min_sun_pct: 'sun', observer_height_m: 'height' };
 const TITLES = { max_night_h: 'Night margin', min_sun_pct: 'Sun share margin', max_comms_gap_h: 'Comms gap margin' };
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -26,11 +26,11 @@ function message(text) { $('comparison-message').textContent = text || ''; $('co
 
 function config() {
   const c = {};
-  for (const id of PROFILE_IDS) c[id] = id === 'start' || id === 'vehicle' ? $(id).value.trim() : parseFloat($(id).value);
+  for (const id of PROFILE_IDS) c[id] = id === 'start' ? $(id).value.trim() : parseFloat($(id).value);
   return c;
 }
 const startUtc = c => c.start + 'T' + pad(c.hour) + ':00:00Z';
-const profileOf = c => ({ duration_days: c.days, vehicle_type: c.vehicle, max_night_h: c.night, max_comms_gap_h: c.gap, min_sun_pct: c.sun, observer_height_m: c.height });
+const profileOf = c => ({ duration_days: c.days, max_night_h: c.night, max_comms_gap_h: c.gap, min_sun_pct: c.sun, observer_height_m: c.height });
 
 function clearErrors() {
   document.querySelectorAll('[aria-invalid=true]').forEach(n => { n.removeAttribute('aria-invalid'); n.removeAttribute('aria-describedby'); });
@@ -58,7 +58,7 @@ function readForm() {
 
 function save() {
   const c = config();
-  Store.save({ profile: { start: c.start, hour: c.hour, days: c.days, night: c.night, gap: c.gap, sun: c.sun, height: c.height, vehicle: c.vehicle }, sites });
+  Store.save({ profile: { start: c.start, hour: c.hour, days: c.days, night: c.night, gap: c.gap, sun: c.sun, height: c.height }, sites });
 }
 function stale() {
   if (ctl) { ctl.abort(); ctl = null; setBusy(false); }
