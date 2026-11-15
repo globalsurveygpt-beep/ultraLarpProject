@@ -1,5 +1,5 @@
 // Approximate positions of named south-polar craters, used only for map labels (not in any calculation).
-// Coordinates are rounded values for mockup purposes only and are NOT survey-grade data.
+// Coordinates are rounded approximations, NOT survey-grade data: the interface labels them as approximate.
 window.FEATURES = [
   { name: "Shackleton", lat: -89.9, lon: 0.0, minZoom: 1.0 },
   { name: "Haworth", lat: -87.5, lon: -5.0, minZoom: 2.2 },

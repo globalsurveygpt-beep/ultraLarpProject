@@ -5,7 +5,6 @@ import pytest
 
 from core import config, patch
 from core.datasets import DATASETS, locate
-from core.horizon import HorizonProfile
 from core.terrain import InsufficientData, Window
 
 from tests.test_api import Server, FixedSource, fake_horizon

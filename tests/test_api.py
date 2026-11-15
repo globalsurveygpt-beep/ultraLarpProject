@@ -19,7 +19,7 @@ import pytest
 import uvicorn
 
 from api import main as api_main
-from core import config, mission
+from core import mission
 from core.datasets import DATASETS, locate
 from core.ephemeris import check_times
 from core.horizon import HorizonProfile

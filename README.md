@@ -6,13 +6,11 @@ Pick a point near the lunar south pole and a date, and see whether a lander coul
 
 > Built for the NASA Space Apps Challenge 2026. Independent project, not affiliated with or endorsed by NASA.
 
-**Status:** work in progress. Nothing below is final until marked as done.
+**Status:** working prototype for the hackathon. The calculation core, the API and the interface run on real LOLA terrain and JPL ephemerides.
 
 ## Demo
 
-- Live demo: _TODO_
-- Video: _TODO_
-- Screenshot: _TODO_
+- Live demo, video and screenshot: to be added at submission.
 
 ## Problem
 
@@ -20,11 +18,14 @@ Near the lunar south pole the Sun skims the horizon, and terrain casts long shad
 
 ## What it does
 
-1. **Reverse search:** find where and when a landing is possible for a given set of mission conditions.
+1. **Reverse search:** find where and when a landing is possible for a given set of mission conditions (5 km grid over the 154 km working zone).
 2. **Side-by-side comparison** of 2-3 candidate sites on one screen.
-3. **Plain metrics** instead of an arbitrary score: longest night, hours without communication.
-4. **Live calculation** for any date.
+3. **Plain metrics** instead of an arbitrary score: longest night, Sun share, longest and total time without Earth.
+4. **Live calculation** for any date from 2000 to 2050.
 5. **One-sentence explanation** of every result.
+6. **Nearest acceptable window** for a site: the first start within five years that meets the thresholds.
+7. **Site view:** the terrain around the site in 3D, with the Sun and Earth at the chosen moment.
+8. **Example scenarios** (four ready points) so that every kind of outcome can be tried with one click. They are examples, not recommendations.
 
 ## How it works
 
@@ -34,7 +35,7 @@ The calculation is deterministic and reproducible. It uses no AI and no estimate
 2. **Calculation core:** for a point and a moment in time, checks whether the Sun and Earth are above the local horizon.
 3. **Mission logic:** one mission profile (duration, longest night, longest comms gap, minimum Sun share, instrument height) checked against each window; lists of acceptable landing windows.
 4. **API:** a thin FastAPI layer between the core and the interface.
-5. **Interface:** a flat polar map, a calendar, charts and comparison view.
+5. **Interface:** a flat polar map, the visibility timeline, daily charts, the 3D site view, a comparison page and the window search.
 
 The demo is hosted on our own server. Terrain and ephemeris files are stored on the server disk, and Sun and Earth positions are computed there with Skyfield. The calculation does not call any external API.
 
@@ -62,12 +63,24 @@ The tool shows allowed landing windows based on illumination and Earth visibilit
 
 ## Run locally
 
-_TODO: setup, data download and start instructions. They will be added together with the data download script._
+Python 3.13 (the version used in development). From the repository root:
+
+```bash
+python -m venv .venv
+.venv/Scripts/activate        # Linux and macOS: source .venv/bin/activate
+pip install -r requirements.txt
+python scripts/fetch_data.py                 # about 235 MB into data/
+python scripts/precompute_horizons.py        # horizons for the window search (once)
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+Open <http://127.0.0.1:8000>. The server also serves the interface. Tests: `pip install -r requirements-dev.txt`, then `pytest`.
+The map background is already in `web/assets/img/`; `python scripts/render_basemap.py` redraws it from the terrain.
 
 ## Tech stack
 
 - Backend: Python, FastAPI, NumPy, rasterio, Skyfield
-- Frontend: vanilla JavaScript, Chart.js
+- Frontend: vanilla JavaScript, hand-drawn SVG charts and map, Three.js (vendored, MIT) for the 3D site view
 
 ## Contributing
 

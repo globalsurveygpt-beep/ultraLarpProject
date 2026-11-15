@@ -19,7 +19,7 @@ const SHARED = { duration: 'search-duration', night: 'search-night', gap: 'searc
 const TITLES = { max_night_h: 'Longest night', min_sun_pct: 'Sun share', max_comms_gap_h: 'Longest comms gap' };
 
 const state = {
-  meta: null, result: null, minute: 0, next: null, presets: null, dirty: false, pinned: [], view: 'site', surface: 'map', searchRows: [], sortKey: 'share', sortAsc: false,
+  result: null, minute: 0, next: null, presets: null, dirty: false, pinned: [], view: 'site', surface: 'map', searchRows: [], sortKey: 'share', sortAsc: false,
   calls: {},            // name -> AbortController of the request in flight
 };
 
@@ -31,7 +31,6 @@ const pad = n => String(n).padStart(2, '0');
 const iso = ms => new Date(ms).toISOString().replace('.000Z', 'Z');
 const utc = ms => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
 const dateOf = ms => new Date(ms).toISOString().slice(0, 10);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const unitOf = c => c.unit === 'pct' ? '%' : ' h';
 const todayUtc = () => new Date().toISOString().slice(0, 10);
 // Smooth scrolling unless the visitor asked for reduced motion.
@@ -119,7 +118,7 @@ function markStale() {
 }
 
 // ---------- site analysis ----------
-function setBusy(busy, fresh) {
+function setBusy(busy) {
   $('assessment-results').setAttribute('aria-busy', String(busy));
   $('window-skeleton').hidden = !busy;
   $('marker').dataset.pulse = String(busy);
@@ -187,7 +186,6 @@ function paintWindow(r, c) {
     .map(a => `<tr><td>${a[0]}</td><td>${num(a[1])}</td><td>${a[2]}</td></tr>`).join('');
   $('report-meta').textContent = r.status === 'acceptable' ? 'ACCEPTABLE' : 'NOT ACCEPTABLE';
   $('report-context').textContent = 'Site ' + c.lat.toFixed(4) + '°, ' + c.lon.toFixed(4) + '° · window ' + utc(start) + ' UTC · ' + num(c.days) + ' d';
-  const len = end - start;
   $('timeline').innerHTML = timelineHtml(r, true);
   $('timeline').querySelectorAll('[data-minute]').forEach(b => { b.onclick = () => { state.minute = Number(b.dataset.minute); inspect(); }; });
   $('interval-table').innerHTML = '<table><thead><tr><th>Body / state</th><th>Start / UTC</th><th>End / UTC</th></tr></thead><tbody>'
@@ -400,8 +398,8 @@ function paintGrid(points, stepKm = 5) {
   });
 }
 function tableSkeleton() {
-  return '<table><thead><tr><th>Site</th><th>Best start / UTC</th><th>Acceptable starts</th><th>Longest night</th></tr></thead><tbody>'
-    + Array.from({ length: 10 }, () => '<tr>' + '<td><span class="skeleton cell-skeleton"></span></td>'.repeat(4) + '</tr>').join('') + '</tbody></table>';
+  return '<table><thead><tr><th>Latitude / °</th><th>Longitude / ° E</th><th>Best start / UTC</th><th>Acceptable starts / %</th><th>Longest night / h</th><th>Comms gap / h</th><th>Sun / %</th><th>Assessment</th></tr></thead><tbody>'
+    + Array.from({ length: 10 }, () => '<tr>' + '<td><span class="skeleton cell-skeleton"></span></td>'.repeat(8) + '</tr>').join('') + '</tbody></table>';
 }
 function renderSearch() {
   const rows = state.searchRows;
@@ -522,7 +520,6 @@ function syncShared(fromSearch) {
 async function loadMeta() {
   try {
     const m = await Api.meta();
-    state.meta = m;
     $('data-state').textContent = m.data.present ? 'LOLA 80 m · DE440 · LIVE' : 'DATA NOT LOADED';
     $('data-state').dataset.kind = m.data.present ? 'ok' : 'error';
     $('example-note').textContent = m.example_note;

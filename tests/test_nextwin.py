@@ -89,3 +89,30 @@ def test_next_window_endpoint():
         status, r = s.call("/api/next-window", {"lat_deg": -89.5, "lon_deg": 0, "from_utc": "2026-12-01T00:00:00Z",
                                                 "profile": {"max_night_h": -1}})
         assert status == 400 and r["error"]["field"] == "max_night_h"
+
+
+class OneLongNight:
+    """Earth always in view; the Sun is gone from `a` to `b` (a night of 40.5 h at 14 days)."""
+
+    def __init__(self, a, b):
+        self.a, self.b = a, b
+
+    def vectors_km(self, times_utc):
+        check_times(times_utc)
+        dark = np.array([self.a <= t < self.b for t in times_utc])
+        sun = np.where(dark[:, None], [0.0, 0.0, 1.5e8], [0.0, 0.0, -1.5e8])
+        return {"sun": sun, "earth": np.tile([0.0, 0.0, -3.844e5], (len(times_utc), 1))}
+
+
+def test_a_night_a_little_over_the_limit_never_ends_the_search():
+    """The hourly screen passes every start whose window cuts the 40.5 h night to 40 h or less
+    on the hour grid, but the minute grid rejects many of them; the search must go on past
+    them to the first start that really passes (here 30 minutes into the night, on the hour)."""
+    a, b = T0 + timedelta(hours=300, minutes=15), T0 + timedelta(hours=340, minutes=45)
+    start = T0 + timedelta(hours=6)
+    r = nextwin.next_window(FakeTerrain(), OneLongNight(a, b), -89.5, 0.0, start, {"duration_days": 14})
+    assert r["found"] is True and r["window"]["status"] == "acceptable"
+    # The night is 40.5 h long, so a window may begin only once 30 minutes of it are behind:
+    # the night starts at T0 + 300 h 15 min, the first whole hour after that is T0 + 301 h.
+    assert r["window"]["window"]["start_utc"] == mission._iso(T0 + timedelta(hours=301))
+    assert r["window"]["metrics"]["longest_night_h"] <= 40

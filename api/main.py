@@ -9,7 +9,9 @@ Endpoints:
     GET  /api/meta
     GET  /api/instant?lat=&lon=&time=&height=
     GET  /api/day-series?lat=&lon=&date=&height=
+    GET  /api/terrain-patch?lat=&lon=&height=
     POST /api/window   {"lat_deg", "lon_deg", "start_utc", "profile"}
+    POST /api/next-window  {"lat_deg", "lon_deg", "from_utc", "profile"}
     POST /api/compare  {"sites": [{"lat_deg", "lon_deg"}, ...], "start_utc", "profile"}
     POST /api/search   {"from_utc", "to_utc", "region", "profile"}
 
@@ -114,7 +116,9 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
             state["terrain"].close()
             state["terrain"] = None
 
-    app = FastAPI(title="LUCY API", version="1.0", lifespan=lifespan)
+    # No /docs, /redoc or /openapi.json: the interactive docs pages load scripts from a CDN, and the
+    # working path makes no external requests.
+    app = FastAPI(title="LUCY API", version="1.0", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.exception_handler(ApiError)
     async def api_error(request: Request, e: ApiError):
