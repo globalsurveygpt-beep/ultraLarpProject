@@ -2,6 +2,8 @@
 
 **L**unar **U**ptime & **C**ommunication **Y**ardstick
 
+[![LUCY demo video](https://img.youtube.com/vi/P_UqEdE5SN4/maxresdefault.jpg)](https://youtu.be/P_UqEdE5SN4)
+
 Pick a point near the lunar south pole and a date, and see whether a lander could operate there: is the Sun above the local horizon for the batteries, and is Earth visible for communication?
 
 > Built for the NASA Space Apps Challenge 2026. Independent project, not affiliated with or endorsed by NASA.
@@ -11,7 +13,7 @@ Pick a point near the lunar south pole and a date, and see whether a lander coul
 ## Demo
 
 - Live demo: [lucy.guardcontract.app](https://lucy.guardcontract.app)
-- Video: _link will be added here_ (YouTube).
+- Video: [watch on YouTube](https://youtu.be/P_UqEdE5SN4)
 
 ### Screenshots
 
