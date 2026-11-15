@@ -1,7 +1,7 @@
 /* LUCY comparison page: one mission window and profile, two or three sites, one POST /api/compare.
    Each site is a card with its own map (and, on request, a 3D view). A click on a map chooses that
    card's site; any change recalculates the comparison by itself. Every number comes from the API.
-   The mission profile is shared with the site page (LucyStore); sites are not: this page starts empty. */
+   The mission profile is shared with the site page (LucyStore); sites are not: the comparison keeps its own sites. */
 'use strict';
 
 const $ = id => document.getElementById(id);
@@ -62,10 +62,21 @@ function readForm() {
   return c;
 }
 
+// The comparison keeps its own sites under its own key, so that leaving the page and coming back does not
+// lose them, while the site analysis page and its point stay separate. Storage can be unavailable.
+const SITES_KEY = 'lucy-compare-sites-v1';
+function loadSites() {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(SITES_KEY) || 'null');
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, 3).map((p, i) => p && typeof p === 'object'
+      ? { slot: i, lat: Number.isFinite(p.lat) ? p.lat : null, lon: Number.isFinite(p.lon) ? p.lon : null } : null);
+  } catch (e) { return []; }
+}
 function save() {
   const c = config();
-  Store.save({ profile: { start: c.start, hour: c.hour, days: c.days, night: c.night, gap: c.gap, sun: c.sun, height: c.height },
-    });
+  Store.save({ profile: { start: c.start, hour: c.hour, days: c.days, night: c.night, gap: c.gap, sun: c.sun, height: c.height } });
+  try { window.localStorage.setItem(SITES_KEY, JSON.stringify(slots.map(site => site ? { lat: isPlaced(site) ? site.lat : null, lon: isPlaced(site) ? site.lon : null } : null))); } catch (e) { /* nothing to keep */ }
 }
 
 // ---------- site cards ----------
@@ -117,13 +128,13 @@ function buildSlots() {
   $('site-cards').querySelectorAll('.site-add').forEach(b => { b.onclick = () => addSite(+b.dataset.slot); });
 }
 
-function addSite(slot) {
+function addSite(slot, lat = null, lon = null) {
   if (slots[slot]) return;
-  const site = { slot, lat: null, lon: null, result: null };
+  const site = { slot, lat: Number.isFinite(lat) ? lat : null, lon: Number.isFinite(lon) ? lon : null, result: null };
   slots[slot] = site;
   createCard(site);
   if (surface === '3d') setSurface('3d');
-  schedule(true);
+  save(); schedule(true);
 }
 function removeSite(card) {
   slots[card.site.slot] = null; cards.splice(cards.indexOf(card), 1);
@@ -281,4 +292,6 @@ function enable3d() { if (window.Site3D) $('cmp-3d').hidden = false; }
 document.addEventListener('lucy:site3d-ready', enable3d);
 enable3d();
 
-buildSlots(); renderResults(); loadMeta(); schedule(true);
+buildSlots();
+loadSites().forEach((p, i) => { if (p) addSite(i, p.lat, p.lon); });
+renderResults(); loadMeta(); schedule(true);
