@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from core import config
-from core.datasets import path_of
+from core.datasets import by_key, path_of, same_file_name
 
 IN_MEMORY_LIMIT_BYTES = 1 << 30
 
@@ -109,8 +109,14 @@ class Terrain:
 
     @property
     def fingerprint(self) -> str:
-        """Identifies the terrain file for caching: name and size in bytes."""
-        return f"{self.path.name}:{self.path.stat().st_size}"
+        """Identifies the terrain file for caching: name and size in bytes.
+        A variant of the manifest name (.tiff, other letter case) counts as the manifest
+        name, so renaming the file does not invalidate the horizon cache."""
+        name = self.path.name
+        manifest = by_key("terrain").filename
+        if same_file_name(name, manifest):
+            name = manifest
+        return f"{name}:{self.path.stat().st_size}"
 
     def _clean(self, z: np.ndarray) -> np.ndarray:
         if self.nodata is not None and not np.isnan(self.nodata):

@@ -242,3 +242,26 @@ def test_main_hash_prints_sha256(tmp_path, monkeypatch, capsys):
     (tmp_path / ds.filename).write_bytes(PAYLOAD_A)
     assert fd.main(["--hash"], [ds]) == 0
     assert hashlib.sha256(PAYLOAD_A).hexdigest() in capsys.readouterr().out
+
+
+def make_tif(payload):
+    return Dataset(key="terrain", filename="T.TIF", url="https://example.invalid/T.TIF",
+                   size_bytes=len(payload), sha256=None, purpose="test")
+
+
+def test_tiff_saved_by_a_browser_counts_as_present(tmp_path):
+    ds = make_tif(PAYLOAD_A)
+    (tmp_path / "T.tiff").write_bytes(PAYLOAD_A)
+    dl = FakeDownload({ds.url: PAYLOAD_A})
+    assert fd.fetch_one(ds, tmp_path, dl, log=lambda *a: None)
+    assert dl.calls == [] and not (tmp_path / "T.TIF").exists()
+    assert fd.check_all(tmp_path, [ds], log=lambda *a: None)
+
+
+def test_wrong_variant_is_replaced_by_a_download(tmp_path):
+    ds = make_tif(PAYLOAD_A)
+    (tmp_path / "T.tiff").write_bytes(b"short")
+    dl = FakeDownload({ds.url: PAYLOAD_A})
+    assert fd.fetch_one(ds, tmp_path, dl, log=lambda *a: None)
+    assert (tmp_path / "T.TIF").read_bytes() == PAYLOAD_A
+    assert fd.check_all(tmp_path, [ds], log=lambda *a: None)  # the exact name wins

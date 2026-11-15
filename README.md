@@ -48,6 +48,8 @@ The demo is hosted on our own server. Terrain and ephemeris files are stored on 
 | Lunar frame kernel (`moon_de440_250416.tf`) | Reference frame that matches the terrain data | [NAIF generic kernels, fk/satellites](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/fk/satellites/) |
 | Planetary constants (`pck00011.tpc`) | Radius of the Moon | [NAIF generic kernels, pck](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/) |
 
+All files go into `data/`. `python scripts/fetch_data.py` downloads and checks them. If you download the terrain by hand, either extension works: a browser may save it as `.tiff`, and letter case does not matter.
+
 The terrain data is described in Barker et al. (2023), [doi:10.3847/PSJ/acf3e1](https://doi.org/10.3847/PSJ/acf3e1).
 
 The data files are not stored in this repository (about 235 MB in total). They are downloaded separately into the `data/` folder.

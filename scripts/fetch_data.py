@@ -32,7 +32,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from core import config  # noqa: E402
-from core.datasets import DATASETS, Dataset  # noqa: E402
+from core.datasets import DATASETS, Dataset, locate  # noqa: E402
 
 USER_AGENT = "lunar-site-data-fetch/1.0"
 CHUNK_BYTES = 1 << 20
@@ -118,8 +118,9 @@ def _size(path: Path) -> int:
 def fetch_one(ds: Dataset, data_dir: Path, download: Download = http_download, log: Log = print) -> bool:
     """Make sure one file is present and valid. Return True on success."""
     target = data_dir / ds.filename
-    if verify(target, ds) is None:
-        log(f"  ok       {ds.filename} (already present)")
+    present = locate(ds, data_dir)
+    if present is not None and verify(present, ds) is None:
+        log(f"  ok       {present.name} (already present)")
         return True
     data_dir.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
@@ -163,9 +164,10 @@ def fetch_all(data_dir: Path, datasets: Iterable[Dataset] = DATASETS,
 def check_all(data_dir: Path, datasets: Iterable[Dataset] = DATASETS, log: Log = print) -> bool:
     ok = True
     for ds in datasets:
-        reason = verify(data_dir / ds.filename, ds)
+        path = locate(ds, data_dir) or data_dir / ds.filename
+        reason = verify(path, ds)
         if reason is None:
-            log(f"  ok       {ds.filename}")
+            log(f"  ok       {path.name}")
         else:
             ok = False
             log(f"  BAD      {ds.filename}: {reason}")
@@ -175,9 +177,9 @@ def check_all(data_dir: Path, datasets: Iterable[Dataset] = DATASETS, log: Log =
 def hash_all(data_dir: Path, datasets: Iterable[Dataset] = DATASETS, log: Log = print) -> bool:
     ok = True
     for ds in datasets:
-        path = data_dir / ds.filename
-        if path.is_file():
-            log(f"  {ds.key}: {sha256_of(path)}  {ds.filename}")
+        path = locate(ds, data_dir)
+        if path is not None:
+            log(f"  {ds.key}: {sha256_of(path)}  {path.name}")
         else:
             ok = False
             log(f"  {ds.key}: missing  {ds.filename}")

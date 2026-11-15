@@ -3,6 +3,10 @@
 Sizes were read from the publishers' servers (HTTP Content-Length) on 2026-11-14.
 SHA-256 values are filled in after the first verified download
 (`python scripts/fetch_data.py --hash`). Until then only sizes are checked.
+
+A file is found under its manifest name or a variant of it: any letter case, and for
+TIFF either extension (.tif or .tiff). Browsers often save the terrain as .tiff, and
+Linux file names are case-sensitive; the content is the same file.
 """
 
 from dataclasses import dataclass
@@ -73,6 +77,37 @@ def by_key(key: str) -> Dataset:
     raise KeyError(f"unknown dataset key: {key}")
 
 
+TIFF_SUFFIXES = (".tif", ".tiff")
+
+
+def same_file_name(name: str, wanted: str) -> bool:
+    if name.lower() == wanted.lower():
+        return True
+    stem, suffix = Path(name).stem.lower(), Path(name).suffix.lower()
+    w = Path(wanted)
+    return (w.suffix.lower() in TIFF_SUFFIXES and suffix in TIFF_SUFFIXES
+            and stem == w.stem.lower())
+
+
+def locate(ds: Dataset, base: Path | None = None) -> Path | None:
+    """The file of this dataset in the folder, or None. The exact manifest name wins
+    over a variant; among variants the first in sorted order is taken."""
+    folder = base or config.data_dir()
+    exact = folder / ds.filename
+    if exact.is_file():
+        return exact
+    try:
+        names = sorted(e.name for e in folder.iterdir() if e.is_file())
+    except OSError:
+        return None
+    for name in names:
+        if same_file_name(name, ds.filename):
+            return folder / name
+    return None
+
+
 def path_of(key: str, base: Path | None = None) -> Path:
-    """Return the local path of a dataset file."""
-    return (base or config.data_dir()) / by_key(key).filename
+    """Return the local path of a dataset file: the file found on disk (see locate),
+    or the manifest name when the file is not there yet."""
+    ds = by_key(key)
+    return locate(ds, base) or (base or config.data_dir()) / ds.filename
