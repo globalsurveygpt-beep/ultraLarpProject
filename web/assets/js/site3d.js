@@ -1,6 +1,6 @@
 /* LUCY site view: the terrain around the selected site, with the Sun and Earth.
    Two cameras over the same terrain:
-   - Overview (default): a camera above the site looking down; drag rotates and tilts, wheel zooms.
+   - Overview (default): a camera above the site looking down; drag rotates and tilts, Ctrl + wheel zooms.
      Only the camera moves; terrain, scale and the calculation are the same as in Observer.
    - Observer: the camera stays at the instrument height and looks around (drag, wheel, arrows).
 
@@ -66,8 +66,8 @@ class SiteView {
       + '<div class="s3d-hud s3d-bodies"><div data-k="sun"></div><div data-k="earth"></div></div>'
       + '<div class="s3d-hud s3d-tools"><span class="s3d-modes"><button type="button" data-mode="overview" aria-pressed="true">Overview</button><button type="button" data-mode="observer" aria-pressed="false">Observer</button></span>'
       + '<button type="button" data-look="sun">Look at Sun</button><button type="button" data-look="earth">Look at Earth</button></div>'
-      + '<div class="s3d-hud s3d-note"><span data-for="overview">Overview: drag to rotate and tilt · Wheel: zoom · Arrows: rotate<br>Camera above the site; the arrows point to the Sun and Earth. Terrain ±20 km from LOLA, no vertical exaggeration. Shading lit for readability; cast shadows not drawn.</span>'
-      + '<span data-for="observer">Observer: drag to look around · Wheel: zoom · Arrows: turn<br>Camera at the instrument height. Terrain ±20 km from LOLA, no vertical exaggeration. Far ridges: horizon profile to 150 km. Sun and Earth discs enlarged; positions exact. Shading lit for readability; cast shadows not drawn.</span></div>'
+      + '<div class="s3d-hud s3d-note"><span data-for="overview">Overview: drag to rotate and tilt · Ctrl + wheel: zoom · Arrows: rotate<br>Camera above the site; the arrows point to the Sun and Earth. Terrain ±20 km from LOLA, no vertical exaggeration. Shading lit for readability; cast shadows not drawn.</span>'
+      + '<span data-for="observer">Observer: drag to look around · Ctrl + wheel: zoom · Arrows: turn<br>Camera at the instrument height. Terrain ±20 km from LOLA, no vertical exaggeration. Far ridges: horizon profile to 150 km. Sun and Earth discs enlarged; positions exact. Shading lit for readability; cast shadows not drawn.</span></div>'
       + '<div class="s3d-status" data-k="status" hidden></div>';
     this.q = k => this.el.querySelector(`[data-k="${k}"]`);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -177,6 +177,7 @@ class SiteView {
     const end = () => { drag = null; c.classList.remove('is-dragging'); };
     c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
     c.addEventListener('wheel', e => {
+      if (!e.ctrlKey) return;                      // a plain wheel scrolls the page; Ctrl + wheel (or a pinch) zooms
       e.preventDefault();
       if (this.mode === 'overview') {
         this.orbit.dist = THREE.MathUtils.clamp(this.orbit.dist * Math.exp(e.deltaY * 0.001), OVERVIEW.minDistM, OVERVIEW.maxDistM);
@@ -413,6 +414,7 @@ let view = null;
 if (webglAvailable() && Api) {
   window.Site3D = {
     mount(container) { if (!view) view = new SiteView(container); },
+    create(container) { return new SiteView(container); },
     show(o) { if (view) view.show(o); },
     setTime(iso) { if (view) view.setTime(iso); },
     resize() { if (view) view.resize(); },

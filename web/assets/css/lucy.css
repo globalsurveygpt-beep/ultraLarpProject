@@ -440,7 +440,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 input[aria-invalid=true] { outline: 1px solid var(--unmet-color); outline-offset: 1px; border-color: var(--unmet-color); box-shadow: none; }
 input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offset: 3px; box-shadow: none; }
 /* Dedicated comparison page: common inputs, aligned columns, shared time axis. */
-.compare-profile { display: grid; grid-template-columns: 1.25fr repeat(5,minmax(80px,1fr)) 1.15fr auto; align-items: start; gap: 12px; padding: 16px; }
+.compare-profile { display: grid; grid-template-columns: 1.25fr repeat(5,minmax(80px,1fr)) 1.15fr; align-items: start; gap: 12px; padding: 16px; }
 .compare-profile .field { min-width: 0; margin: 0; }
 .compare-profile label { font-size: 11px; margin-bottom: 6px; }
 .compare-profile input { height: 35px; padding: 6px 8px; font-size: 12px; }
@@ -523,7 +523,8 @@ input[type=range]:focus-visible { outline: 1px solid var(--muted); outline-offse
 .comparison-matrix [data-stale=true] td{opacity:.45}
 
 /* Map: the world layer is scaled and moved by map.js; overlays stay in screen pixels. */
-.map { overscroll-behavior: none; touch-action: none; outline: none; }
+/* A plain wheel over the map scrolls the page (Ctrl + wheel zooms); a finger can scroll it vertically. */
+.map { touch-action: pan-y; outline: none; }
 .map:focus-visible { box-shadow: inset 0 0 0 1px var(--ink); }
 .map.is-panning, .map.space-pan { cursor: grab; }
 .map.is-panning { cursor: grabbing; }
@@ -723,3 +724,80 @@ header nav button,header nav .nav-links a{padding:0 2px;font-size:12.5px;border-
   header nav button,header nav .nav-links a{padding:10px 0;font-size:12px}
   header .mode{display:none}
 }
+
+/* ---------- First screen: the question, the map, the answer ---------- */
+.workspace-title .page-sub{margin:0 0 4px;color:var(--muted);font-size:13px;max-width:760px;line-height:1.5}
+.workspace-title .page-sub[hidden]{display:none}
+.setup-sub{font-size:11px;color:var(--muted)}
+@media(min-width:901px){
+  .setup-stage .analysis-column{flex-direction:column;gap:12px}
+  .setup-stage .setup-panel{flex:none}
+}
+.answer-card{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.answer-context{margin:0;font:11px var(--mono);color:var(--muted)}
+.answer-main{display:flex;flex-direction:column;gap:6px}
+.answer-verdict{align-self:flex-start;font-size:20px;font-weight:500;padding:4px 12px;border-radius:4px;border:1px solid var(--line);color:var(--ink)}
+.answer-verdict[data-kind=ok]{color:var(--met-color);border-color:var(--met-color);background:#8bb39c14}
+.answer-verdict[data-kind=bad]{color:var(--unmet-color);border-color:var(--unmet-color);background:#d49b9514}
+.answer-verdict[data-kind=busy]{color:var(--muted);animation:marker-pulse 1.5s ease-in-out infinite}
+.answer-text{margin:0;font-size:14px;line-height:1.5;color:var(--ink)}
+.answer-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.answer-metrics:empty{display:none}
+.answer-metrics>div{border:1px solid var(--line);border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.answer-metrics small{font-size:11px;color:var(--muted)}
+.answer-metrics b{font-size:20px;font-weight:500}
+.answer-metrics span{font:10px var(--mono);color:var(--muted)}
+.answer-metrics .is-met b{color:var(--met-color)}.answer-metrics .is-unmet b{color:var(--unmet-color)}
+.answer-metrics .is-unmet{border-color:#d49b9566}
+.answer-stale{display:none;margin:0;font-size:12px;color:var(--sun-color)}
+.answer-card[data-stale=true] .answer-stale{display:block}
+.answer-card[data-stale=true] .answer-main,.answer-card[data-stale=true] .answer-metrics{opacity:.45}
+.answer-actions{display:flex;flex-wrap:wrap;gap:6px}
+.answer-actions button{font-size:12px;padding:7px 11px;background:transparent}
+.answer-actions button:first-child{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.answer-actions button[hidden]{display:none}
+.scenario-panel .presets{border-bottom:0}
+.preset-buttons button[aria-pressed=true]{border-color:var(--ink);background:#ffffff0d}
+.preset-buttons .outcome{display:block;font:500 10px var(--mono);font-style:normal;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.outcome[data-kind=ok]{color:var(--met-color)}.outcome[data-kind=bad]{color:var(--unmet-color)}.outcome[data-kind=later]{color:var(--sun-color)}
+.map-invite{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;background:#0b0b0bd9;border:1px solid #ffffff40;color:#fff;font-size:12px;pointer-events:none;white-space:nowrap}
+.map-invite i{width:8px;height:8px;border-radius:50%;background:var(--met-color);animation:invite-dot 1.4s ease-out infinite}
+.map-invite[hidden]{display:none}
+.map.is-inviting .marker{animation:invite-ring 1.6s ease-out infinite}
+@keyframes invite-dot{0%{box-shadow:0 0 0 0 #8bb39caa}100%{box-shadow:0 0 0 8px #8bb39c00}}
+@keyframes invite-ring{0%{box-shadow:0 0 0 0 #ffffffaa}100%{box-shadow:0 0 0 18px #ffffff00}}
+@media(prefers-reduced-motion:reduce){.map-invite i,.map.is-inviting .marker,.answer-verdict[data-kind=busy]{animation:none}}
+@media(max-width:600px){.answer-metrics{gap:6px}.answer-metrics>div{padding:6px 8px}.answer-metrics b{font-size:16px}.answer-metrics small{font-size:10px}.answer-verdict{font-size:17px}.map-invite{bottom:10px;font-size:11px}}
+
+/* ---------- Comparison page: one card with its own map per site ---------- */
+.site-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.site-card{display:flex;flex-direction:column;min-width:0}
+.site-card-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.site-card-head h2{margin:0;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.site-card-head .site-verdict{margin-left:auto;font-size:12px;padding:3px 9px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.site-card-head .site-verdict[hidden]{display:none}
+.site-verdict[data-kind=ok]{color:var(--met-color);border-color:var(--met-color);background:#8bb39c14}
+.site-verdict[data-kind=bad]{color:var(--unmet-color);border-color:var(--unmet-color);background:#d49b9514}
+.site-card-head button{font-size:10px;padding:4px 7px;background:transparent}
+.site-card-head .site-verdict[hidden]+button{margin-left:auto}
+.site-card-stage{width:100%}
+.site-card .map{border-radius:0}
+.site-card .site3d{z-index:4}
+.site-card .s3d-note,.site-card .s3d-bodies{display:none}
+.site-card .s3d-tools{top:40px}
+.site-card[data-pending] .site-card-foot{opacity:.5}
+.site-card-foot{padding:10px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.site-coords{margin:0;font:11px var(--mono);color:var(--muted)}
+.site-card-foot .answer-metrics>div{padding:6px 8px}.site-card-foot .answer-metrics b{font-size:16px}
+.site-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:340px;border:1.5px dashed var(--line);border-radius:6px;background:transparent;color:var(--muted);font-size:14px}
+.site-add:hover{border-color:var(--ink);color:var(--ink)}
+.site-add[hidden]{display:none}
+.site-add i{font-style:normal;font-size:56px;line-height:1;font-weight:300}
+.comparison-page .workspace-title{flex-wrap:wrap;justify-content:space-between}
+.comparison-page .workspace-title .page-sub{margin:4px 0 0;max-width:720px}
+@media(max-width:1000px){.site-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.site-cards{grid-template-columns:minmax(0,1fr)}.site-add{min-height:160px}}
+
+.site-slot{display:flex;flex-direction:column;min-width:0}
+.site-slot>.site-card{flex:1}
+.site-slot>.site-add{flex:1}

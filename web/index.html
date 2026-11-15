@@ -14,12 +14,12 @@
 <div class="header-brand"><a class="brand" href="index.html"><img src="assets/img/logo.png" alt="LUCY" width="90" height="28"></a><div class="product">Lunar Uptime &amp; Communication Yardstick</div></div>
 <nav aria-label="Primary navigation"><div class="nav-links">
 <button role="tab" id="tab-site" aria-selected="true" aria-controls="site-view" data-view="site">Site analysis</button>
-<a id="tab-compare" href="compare.html">Comparison <span id="pin-count" class="mono">[0/3]</span></a>
+<a id="tab-compare" href="compare.html">Comparison</a>
 <button role="tab" id="tab-search" aria-selected="false" aria-controls="search-view" data-view="search">Window search</button>
 </div></nav>
 <div class="header-tools"><span class="mode" id="data-state">Connecting…</span><button type="button" id="about">Method &amp; sources</button></div>
 </header>
-<div class="workspace-title"><div><h1 id="page-title">Landing window assessment</h1></div></div>
+<div class="workspace-title"><div><h1 id="page-title">Could a lander survive here?</h1><p class="page-sub" id="page-sub">Click anywhere near the lunar south pole. LUCY checks sunlight for power and the line of sight to Earth, minute by minute, on NASA LOLA terrain.</p></div></div>
 
 <main>
 <div id="site-view" data-stale="false" role="tabpanel" aria-labelledby="tab-site">
@@ -56,6 +56,7 @@
 </div>
 <div class="map-ui map-help" id="map-help" role="note" hidden><b>Click</b> place site · <b>Drag</b> zoom to area · <b>Ctrl + wheel</b> zoom · <b>Middle drag</b> or <b>Space + drag / arrows</b> pan · <b>Right-click</b> menu · <b>Backspace</b> previous view · <span class="kbd">.</span> place at cursor · <b>Zone</b> zoom to the working zone · <b>↺</b> whole map</div>
 <span class="map-ui map-scale" id="readout">×1.0</span>
+<div class="map-invite" id="map-invite" aria-hidden="true"><i></i>Click the map to test any site</div>
 <div class="ctx" id="ctx" role="menu" aria-label="Map menu">
 <button type="button" role="menuitem" data-act="place">Place site here <span class="kbd">.</span></button>
 <button type="button" role="menuitem" data-act="copy">Copy coordinates</button>
@@ -72,8 +73,23 @@
 </section>
 
 <div class="analysis-column">
-<section class="panel setup-panel"><div class="panel-head"><h2>Mission setup</h2></div>
-<div class="presets" id="presets" hidden><div class="presets-head"><span>Example scenarios</span><small id="presets-note">Example scenarios, not recommendations.</small></div><div class="preset-buttons" id="preset-buttons" role="group" aria-label="Example scenarios"></div></div>
+<section class="panel answer-card" id="answer-card" data-stale="false" aria-live="polite" aria-label="Answer for the selected site">
+<p class="answer-context" id="answer-context">No site checked yet</p>
+<div class="answer-main"><span class="answer-verdict" id="answer-verdict" data-kind="idle">Click the map</span><p class="answer-text" id="answer-text">Pick any point within 154 km of the pole to check it.</p></div>
+<div class="answer-metrics" id="answer-metrics"></div>
+<p class="answer-stale" id="answer-stale">Settings changed. Click the map or press Run assessment to update.</p>
+<div class="answer-actions">
+<button type="button" id="answer-3d">See it in 3D</button>
+<button type="button" id="answer-next" hidden>When can I land here? ↓</button>
+<button type="button" id="answer-compare">Compare sites →</button>
+<button type="button" id="answer-search">Find the best sites</button>
+<button type="button" id="answer-report">Full report ↓</button>
+</div>
+</section>
+<section class="panel scenario-panel">
+<div class="presets" id="presets" hidden><div class="presets-head"><span>Same day, four sites, four answers</span><small id="presets-note">Example scenarios, not recommendations.</small></div><div class="preset-buttons" id="preset-buttons" role="group" aria-label="Example scenarios"></div></div>
+</section>
+<section class="panel setup-panel"><div class="panel-head"><h2>Mission setup</h2><span class="setup-sub">Tune the site, dates and limits</span></div>
 <form id="mission-form" novalidate>
 <fieldset class="location-group">
 <legend>Observer location</legend>
@@ -112,7 +128,7 @@
 </section>
 
 <section id="results-section" class="results-section" aria-label="Assessment and plots">
-<div class="results-heading"><h2>Assessment</h2><span class="mono" id="window-label"></span><div class="tools"><button id="pin" disabled>+ Add site to comparison</button><button id="export" disabled>↓ Export CSV</button></div></div>
+<div class="results-heading"><h2>Assessment</h2><span class="mono" id="window-label"></span><div class="tools"><button id="export" disabled>↓ Export CSV</button></div></div>
 
 <section class="panel assessment-panel" id="assessment-results" aria-label="Window assessment">
 <div class="panel-head"><h2>Assessment</h2><span id="run-state" class="mono">NOT CALCULATED</span></div>

@@ -216,7 +216,17 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
 
     if WEB_DIR.is_dir():
         from fastapi.staticfiles import StaticFiles
-        app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+
+        class RevalidatedFiles(StaticFiles):
+            """Interface files: the browser asks again before reusing its copy (ETag), so a page and its
+            scripts never come from different versions. A proxy in front may set longer rules for images."""
+
+            async def get_response(self, path, scope):
+                response = await super().get_response(path, scope)
+                response.headers.setdefault("Cache-Control", "no-cache")
+                return response
+
+        app.mount("/", RevalidatedFiles(directory=WEB_DIR, html=True), name="web")
 
     return app
 
