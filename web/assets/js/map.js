@@ -6,9 +6,10 @@
   'use strict';
 
   const R_KM = 1737.4;          // sphere of the LOLA product
-  const HALF_KM = 160;          // the image spans x, y in [-160, 160] km
+  const HALF_KM = 304;          // the image spans x, y in [-304, 304] km: the whole LOLA raster
   const ZONE_KM = 154;          // working zone, great-circle distance from the pole
-  const MAXZ = 8, DRAG_PX = 6, PAN_STEP = 70, HISTORY = 30;
+  const LAT_RINGS = [-89, -88, -87, -86, -85, -84, -83, -82, -81];
+  const MAXZ = 16, DRAG_PX = 6, PAN_STEP = 70, HISTORY = 30;
   const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------- projection ----------
@@ -77,17 +78,21 @@
   function drawGrid() {
     const ring = (r, cls) => `<circle cx="0" cy="0" r="${r.toFixed(3)}" class="${cls}"/>`;
     let svg = '';
-    for (const lat of [-89, -88, -87, -86, -85]) svg += ring(latLonToXY(lat, 0).y, 'lat');
+    for (const lat of LAT_RINGS) svg += ring(latLonToXY(lat, 0).y, 'lat');
     for (let lon = 0; lon < 360; lon += 30) {
-      const a = lon * Math.PI / 180, r = rhoOfArc(ZONE_KM);
+      const a = lon * Math.PI / 180, r = HALF_KM * Math.SQRT2;
       svg += `<path class="lon" d="M0 0L${(r * Math.sin(a)).toFixed(2)} ${(-r * Math.cos(a)).toFixed(2)}"/>`;
     }
     svg += ring(rhoOfArc(ZONE_KM), 'zone');
-    for (const lat of [-89, -88, -87, -86, -85]) {
+    for (const lat of LAT_RINGS) {
       const y = latLonToXY(lat, 0).y;
-      svg += `<text x="1.2" y="${(-y - 1.2).toFixed(2)}">${-lat}° S</text>`;
+      svg += `<text x="2.4" y="${(-y - 2.4).toFixed(2)}">${-lat}° S</text>`;
     }
     el.grid.innerHTML = svg;
+    // Outside the working zone the horizon circle would leave the raster: no calculation there.
+    // The relief stays visible, slightly dimmed, so the region still reads as one map.
+    const z = rhoOfArc(ZONE_KM), H = HALF_KM;
+    el.shade.innerHTML = `<path fill-rule="evenodd" d="M${-H} ${-H}H${H}V${H}H${-H}Z M${z} 0A${z} ${z} 0 1 0 ${-z} 0A${z} ${z} 0 1 0 ${z} 0Z"/>`;
   }
   function place(node, uv) { if (!node || !uv) return; const p = toScreen(uv.u, uv.v); node.style.left = p.x + 'px'; node.style.top = p.y + 'px'; }
   function render() {
@@ -228,6 +233,11 @@
     for (const [k, id] of Object.entries({ map: 'map', world: 'world', grid: 'grid', marker: 'marker', pinLayer: 'pin-layer', labelLayer: 'label-layer',
       ctx: 'ctx', selbox: 'selbox', readout: 'readout', zoomIn: 'zoom-in', zoomOut: 'zoom-out', reset: 'zoom-reset', prev: 'zoom-prev' })) el[k] = document.getElementById(id);
     el.pinNodes = [];
+    el.shade = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    el.shade.setAttribute('class', 'zone-shade'); el.shade.setAttribute('aria-hidden', 'true');
+    el.shade.setAttribute('viewBox', `${-HALF_KM} ${-HALF_KM} ${2 * HALF_KM} ${2 * HALF_KM}`);
+    el.shade.setAttribute('preserveAspectRatio', 'none');
+    el.world.insertBefore(el.shade, el.grid);
     // Only features that fall on the basemap; the rest would float over the empty border.
     el.labels = (window.FEATURES || []).filter(f => { const p = latLonToXY(f.lat, f.lon); return Math.abs(p.x) < HALF_KM && Math.abs(p.y) < HALF_KM; }).map(f => {
       const node = document.createElement('div'); node.className = 'flabel'; node.textContent = f.name;

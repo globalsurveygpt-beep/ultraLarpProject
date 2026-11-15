@@ -3,9 +3,8 @@
 'use strict';
 
 const $ = id => document.getElementById(id);
-const Api = window.LucyApi;
+const Api = window.LucyApi, Store = window.LucyStore;
 const MINUTE = 60000, DAY = 86400000;
-const EXAMPLE_SITES = [{ lat: -88.9, lon: 43.2 }, { lat: -88.8, lon: 55.2 }];  // example coordinates, not recommendations
 
 // API request keys -> form element ids, for highlighting the field the server rejected.
 const FIELD_IDS = {
@@ -17,8 +16,7 @@ const FIELD_IDS = {
 const TITLES = { max_night_h: 'Longest night', min_sun_pct: 'Sun share', max_comms_gap_h: 'Longest comms gap' };
 
 const state = {
-  meta: null, result: null, dirty: false, pinned: [], view: 'site',
-  compare: null, searchRows: [], sortKey: 'share', sortAsc: false,
+  meta: null, result: null, dirty: false, pinned: [], view: 'site', surface: 'map', searchRows: [], sortKey: 'share', sortAsc: false,
   calls: {},            // name -> AbortController of the request in flight
 };
 
@@ -202,6 +200,7 @@ function paintWindow(r, c) {
 function inspect() {
   if (!state.result || state.result.r.data_status !== 'ok') return;
   const { r, c } = state.result, ms = Date.parse(r.window.start_utc) + Number($('cursor').value) * MINUTE;
+  if (window.Site3D && state.surface === '3d') window.Site3D.setTime(iso(ms));
   $('epoch').textContent = utc(ms); $('cursor-label').textContent = utc(ms) + ' UTC'; $('instant-meta').textContent = utc(ms) + ' UTC';
   clearTimeout(inspect.t);
   inspect.t = setTimeout(async () => {
@@ -272,59 +271,17 @@ function exportCsv() {
   a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// ---------- comparison ----------
+// ---------- comparison sites (the comparison itself is on compare.html) ----------
 function updatePinned() {
   $('pin-count').textContent = '[' + state.pinned.length + '/3]';
   MapView.setPins(state.pinned.map((p, i) => ({ ...p, name: String.fromCharCode(65 + i) })));
-  renderComparison();
-}
-function renderComparison(busy = false) {
-  const sites = state.pinned;
-  $('compare-button').disabled = sites.length < 2 || busy;
-  if (sites.length < 2) {
-    $('comparison').innerHTML = '<div class="empty"><h2>Add at least two candidate sites</h2><p>Use “+ Add site to comparison” on the analysis screen, or load two example sites.</p></div>';
-    return;
-  }
-  const results = state.compare && state.compare.key === compareKey() ? state.compare.results : null;
-  const specs = [['Assessment', r => `<span class="${r.status === 'acceptable' ? 'met' : 'unmet'}">${r.status === 'acceptable' ? '✓ Acceptable' : '× Not acceptable'}</span>`],
-    ['Longest night / h', r => num(r.metrics.longest_night_h)], ['Sun share / %', r => num(r.metrics.sun_pct)],
-    ['Longest comms gap / h', r => num(r.metrics.longest_comms_gap_h)], ['Total time without Earth / h', r => num(r.metrics.comms_down_h)],
-    ['Earth visibility share / %', r => num(r.metrics.comms_pct)], ['Ground height / m', r => num(r.site.height_m)],
-    ...['max_night_h', 'min_sun_pct', 'max_comms_gap_h'].map(k => [TITLES[k] + ' margin', r => {
-      const x = r.criteria.find(q => q.key === k);
-      return `<span class="${x.met ? 'met' : 'unmet'}">${x.margin >= 0 ? '+' : ''}${num(x.margin)}${x.unit === 'pct' ? ' pp' : ' h'}</span>`;
-    }]),
-    ['Explanation', r => esc(r.explanation)]];
-  const cell = (r, fn) => busy ? '<span class="skeleton cell-skeleton"></span>' : !r ? '—' : r.data_status !== 'ok' ? 'Insufficient terrain data' : fn(r);
-  $('comparison').innerHTML = '<table><thead><tr><th>Quantity</th>'
-    + sites.map((p, i) => `<th>Site ${String.fromCharCode(65 + i)}<br>${p.lat.toFixed(4)}°, ${p.lon.toFixed(4)}°<br><button type="button" data-remove="${i}">Remove</button></th>`).join('')
-    + '</tr></thead><tbody>' + specs.map(([label, fn]) => '<tr><td>' + label + '</td>' + sites.map((p, i) => '<td>' + cell(results && results[i], fn) + '</td>').join('') + '</tr>').join('')
-    + '</tbody></table>';
-  $('comparison').querySelectorAll('[data-remove]').forEach(b => { b.onclick = () => { state.pinned.splice(+b.dataset.remove, 1); updatePinned(); }; });
-}
-function compareKey() { const c = config(); return JSON.stringify([state.pinned, startUtc(c), profileOf(c)]); }
-async function compareSites() {
-  if (state.pinned.length < 2) return;
-  const c = readForm(); if (!c) { setView('site'); return; }
-  message('compare-message', 'Calculating comparison…'); renderComparison(true);
-  try {
-    const key = compareKey();
-    const r = await call('compare', s => Api.compare({ sites: state.pinned.map(p => ({ lat_deg: p.lat, lon_deg: p.lon })), start_utc: startUtc(c), profile: profileOf(c) }, s));
-    if (!r) return;
-    state.compare = { key, results: r.results };
-    message('compare-message', '');
-  } catch (e) {
-    if (e.status === 400 && e.field && FIELD_IDS[e.field] && $(FIELD_IDS[e.field]).closest('#site-view')) { setView('site'); fieldError(e.field, e.message); }
-    else showError(e, 'compare-message');
-  }
-  renderComparison();
+  Store.save({ sites: state.pinned });
 }
 
 // ---------- inverse search ----------
 function updateContext() {
   const c = config();
   const text = c.start + ' ' + pad(c.hour || 0) + ':00 · ' + num(c.days) + ' d · Night ≤ ' + num(c.night) + ' h · Comms gap ≤ ' + num(c.gap) + ' h · Sun ≥ ' + num(c.sun) + '%';
-  $('compare-context').textContent = 'Shared window and profile: ' + text;
   $('search-context').textContent = 'Profile from Site analysis: ' + text.split(' · ').slice(1).join(' · ');
 }
 const shareColor = p => {
@@ -334,7 +291,7 @@ const shareColor = p => {
 };
 function paintGrid(points) {
   const zone = 2 * 1737.4 * Math.tan(MapView.ZONE_KM / (2 * 1737.4));
-  $('search-grid').innerHTML = `<image href="assets/img/basemap.jpg" x="-160" y="-160" width="320" height="320" opacity=".35" preserveAspectRatio="none"/>`
+  $('search-grid').innerHTML = `<image href="assets/img/basemap.jpg" x="-304" y="-304" width="608" height="608" opacity=".35" preserveAspectRatio="none"/>`
     + `<circle cx="0" cy="0" r="${zone.toFixed(2)}" fill="none" stroke="#bbb" stroke-dasharray="3 3" stroke-width=".5"/>`
     + points.map((p, i) => {
       const xy = MapView.latLonToXY(p.lat_deg, p.lon_deg), title = `${p.lat_deg.toFixed(4)}°, ${p.lon_deg.toFixed(4)}° · ${num(p.acceptable_pct)}% acceptable starts`;
@@ -372,9 +329,9 @@ function inspectTop(t) {
   $('lat').value = w.site.lat_deg.toFixed(6); $('lon').value = w.site.lon_deg.toFixed(6);
   $('start').value = dateOf(start); $('hour').value = start.getUTCHours();
   $('height').value = 0; updateEnd();
-  paintWindow(w, config());
+  paintWindow(w, config()); saveProfile();
   setView('site');
-  $('assessment-results').scrollIntoView({ block: 'start' });
+  if (!showSite3D()) $('results-section').scrollIntoView({ block: 'start' });
 }
 async function search() {
   clearErrors();
@@ -415,18 +372,47 @@ async function search() {
 }
 
 // ---------- views ----------
-const VIEWS = {
-  site: ['WORKSPACE / SITE ANALYSIS', 'Landing window assessment', 'Evaluate power and communication constraints for a candidate site.'],
-  compare: ['WORKSPACE / COMPARISON', 'Compare candidate sites', 'One window and one mission profile, two or three sites side by side.'],
-  search: ['WORKSPACE / WINDOW SEARCH', 'Find sites & start dates', 'Where and when the mission thresholds are met across the supported region.'],
-};
+const VIEWS = { site: 'Landing window assessment', search: 'Find sites & start dates' };
 function setView(v) {
   state.view = v;
   for (const key of Object.keys(VIEWS)) { $(key + '-view').hidden = key !== v; $('tab-' + key).setAttribute('aria-selected', String(key === v)); }
-  [$('page-code').textContent, $('page-title').textContent, $('page-lead').textContent] = VIEWS[v];
+  $('page-title').textContent = VIEWS[v];
   updateContext();
   if (v === 'site') MapView.redraw();
-  if (v === 'compare') renderComparison();
+}
+
+/* Surface panel: the 2D map, or the 3D view of the selected site. The 3D view is an optional
+   module (assets/js/site3d.js) that sets window.Site3D; without it the switch stays hidden. */
+function setSurface(mode) {
+  const three = mode === '3d' && !!window.Site3D;
+  state.surface = three ? '3d' : 'map';
+  $('site3d').hidden = !three;
+  $('view-map').setAttribute('aria-pressed', String(!three));
+  $('view-3d').setAttribute('aria-pressed', String(three));
+  if (three) window.Site3D.resize(); else MapView.redraw();
+}
+function showSite3D() {
+  if (!window.Site3D || !state.result || state.result.r.data_status !== 'ok') return false;
+  const { r, c } = state.result;
+  window.Site3D.show({ lat: c.lat, lon: c.lon, height_m: c.height, ground_m: r.site.height_m, time_utc: currentTime() });
+  setSurface('3d');
+  return true;
+}
+function currentTime() {
+  if (!state.result) return null;
+  return iso(Date.parse(state.result.r.window.start_utc) + Number($('cursor').value) * MINUTE);
+}
+function saveProfile() {
+  const c = config();
+  Store.save({ profile: { start: c.start, hour: c.hour, days: c.days, night: c.night, gap: c.gap, sun: c.sun, height: c.height, vehicle: c.vehicle },
+    site: Number.isFinite(c.lat) && Number.isFinite(c.lon) ? { lat: c.lat, lon: c.lon } : null });
+}
+function restore() {
+  const saved = Store.load();
+  const ids = { start: 'start', hour: 'hour', days: 'duration', night: 'night', gap: 'gap', sun: 'sun', height: 'height', vehicle: 'vehicle' };
+  if (saved.profile) for (const [k, id] of Object.entries(ids)) if (saved.profile[k] != null && saved.profile[k] !== '') $(id).value = saved.profile[k];
+  if (saved.site) { $('lat').value = saved.site.lat; $('lon').value = saved.site.lon; }
+  state.pinned = saved.sites.map(p => ({ lat: p.lat, lon: p.lon }));
 }
 
 // ---------- start ----------
@@ -455,7 +441,7 @@ MapView.init({
   onPlace(lat, lon) {
     $('lat').value = lat.toFixed(4); $('lon').value = lon.toFixed(4);
     MapView.setMarker(lat, lon);
-    clearErrors(); markStale(); updateContext();
+    clearErrors(); markStale(); updateContext(); saveProfile();
     const km = MapView.arcKm(lat);
     if (km > MapView.ZONE_KM) notify(`Outside the working zone (${km.toFixed(0)} km from the pole): the result will be "insufficient terrain data".`);
   },
@@ -463,18 +449,19 @@ MapView.init({
 });
 for (const id of ['lat', 'lon', 'start', 'hour', 'duration', 'vehicle', 'height', 'night', 'gap', 'sun']) {
   $(id).addEventListener('input', () => {
-    markStale(); updateEnd(); updateContext();
+    markStale(); updateEnd(); updateContext(); saveProfile();
     if (id === 'lat' || id === 'lon') { const c = config(); if (Number.isFinite(c.lat) && Number.isFinite(c.lon)) MapView.setMarker(c.lat, c.lon); }
   });
 }
-$('mission-form').onsubmit = async e => { e.preventDefault(); if (await runWindow()) $('assessment-results').scrollIntoView({ block: 'start' }); };
+// After a calculation: the 3D site view when it is available, otherwise the results.
+$('mission-form').onsubmit = async e => { e.preventDefault(); saveProfile(); if (await runWindow() && !showSite3D()) $('results-section').scrollIntoView({ block: 'start' }); };
+$('view-results').onclick = () => $('results-section').scrollIntoView({ block: 'start' });
+$('view-map').onclick = () => setSurface('map');
+$('view-3d').onclick = () => { if (!showSite3D()) notify('Run the assessment first: the site view shows the calculated site.'); };
 $('cursor').oninput = inspect;
 $('chart-day').addEventListener('change', renderCharts);
 $('grid-toggle').onchange = e => MapView.setGrid(e.target.checked);
 $('labels-toggle').onchange = e => MapView.setLabels(e.target.checked);
-$('jump-setup').onclick = () => $('mission-form').scrollIntoView({ block: 'start' });
-$('jump-results').onclick = () => $('assessment-results').scrollIntoView({ block: 'start' });
-$('jump-timeline').onclick = () => $('visibility-timeline').scrollIntoView({ block: 'start' });
 document.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => setView(b.dataset.view); });
 $('pin').onclick = () => {
   if (!state.result || state.dirty || state.result.r.data_status !== 'ok') return;
@@ -483,15 +470,19 @@ $('pin').onclick = () => {
   if (state.pinned.length === 3) { notify('At most 3 sites. Remove one first.'); return; }
   state.pinned.push(p); updatePinned(); notify('Site added to comparison.');
 };
-$('example-sites').onclick = () => { state.pinned = EXAMPLE_SITES.map(p => ({ ...p })); updatePinned(); };
-$('compare-button').onclick = compareSites;
 $('export').onclick = exportCsv;
 $('search-form').onsubmit = e => { e.preventDefault(); search(); };
 $('search-region').onchange = () => { $('radius-field').hidden = $('search-region').value !== 'circle'; };
 $('about').onclick = () => $('sources').showModal();
 $('close-sources').onclick = () => $('sources').close();
 
+restore();
 updateEnd(); updateContext(); updatePinned();
+// The 3D site view is an ES module that loads after this script: enable it when it reports ready.
+function enableSite3D() { if (!window.Site3D || !$('view-switch').hidden) return; window.Site3D.mount($('site3d')); $('view-switch').hidden = false; }
+document.addEventListener('lucy:site3d-ready', enableSite3D);
+enableSite3D();
 MapView.setMarker(config().lat, config().lon);
 $('search-results').innerHTML = '<div class="empty"><h2>Search the supported region</h2><p>Choose the start-date period and a region, then press Search.</p></div>';
 loadMeta();
+if (location.hash === '#search') setView('search');

@@ -43,6 +43,7 @@
     meta: signal => request('GET', '/api/meta', null, signal),
     instant: (p, signal) => request('GET', '/api/instant?' + query(p), null, signal),
     daySeries: (p, signal) => request('GET', '/api/day-series?' + query(p), null, signal),
+    terrainPatch: (p, signal) => request('GET', '/api/terrain-patch?' + query(p), null, signal),
     window: (body, signal) => request('POST', '/api/window', body, signal),
     compare: (body, signal) => request('POST', '/api/compare', body, signal),
     search: (body, signal) => request('POST', '/api/search', body, signal),

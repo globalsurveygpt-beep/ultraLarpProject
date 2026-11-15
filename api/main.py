@@ -33,7 +33,7 @@ from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from core import config, mission, search
+from core import config, mission, patch, search
 from core.datasets import DATASETS, locate
 from core.mission import ProfileError
 
@@ -156,6 +156,10 @@ def create_app(terrain=None, source=None, load_data: bool = True, max_parallel: 
     @app.get("/api/day-series")
     def day_series(lat: float, lon: float, date: str, height: float = 0.0):
         return compute(mission.day_series_response, lat, lon, parse_time(date, "date"), height)
+
+    @app.get("/api/terrain-patch")
+    def terrain_patch(lat: float, lon: float, height: float = 0.0):
+        return compute(patch.patch_response, lat, lon, height)
 
     @app.post("/api/window")
     def assess_window(body: dict = Body(...)):

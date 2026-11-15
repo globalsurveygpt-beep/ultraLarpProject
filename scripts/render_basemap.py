@@ -1,7 +1,7 @@
 """Render the map background of the web interface from the LOLA terrain.
 
 Usage:
-    python scripts/render_basemap.py                 web/assets/img/basemap.jpg, +-160 km, 80 m
+    python scripts/render_basemap.py                 web/assets/img/basemap.jpg, the whole raster (+-304 km) at 160 m
     python scripts/render_basemap.py --half-km 200 --pixel-m 100
 
 The image is a crop of the terrain raster around the south pole, in the raster's own south
@@ -46,7 +46,8 @@ def hillshade(z: np.ndarray, pixel_m: float) -> np.ndarray:
 
 def render(terrain: Terrain, half_m: float, pixel_m: float) -> np.ndarray:
     n = int(round(2 * half_m / pixel_m))
-    w = terrain.read_window(-half_m, -half_m, half_m, half_m, margin_px=0)
+    e = 1e-6  # keep the box edges inside the raster: a centre exactly on the edge belongs to no pixel
+    w = terrain.read_window(-half_m + e, -half_m + e, half_m - e, half_m - e, margin_px=0)
     z = w.heights.astype(np.float64)
     if np.isnan(z).any():
         raise SystemExit("the crop reaches past the terrain; choose a smaller --half-km")
@@ -67,8 +68,8 @@ def render(terrain: Terrain, half_m: float, pixel_m: float) -> np.ndarray:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Render the web map background from the LOLA terrain.")
-    parser.add_argument("--half-km", type=float, default=160.0)
-    parser.add_argument("--pixel-m", type=float, default=80.0)
+    parser.add_argument("--half-km", type=float, default=304.0)
+    parser.add_argument("--pixel-m", type=float, default=160.0)
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "web" / "assets" / "img" / "basemap.jpg")
     parser.add_argument("--quality", type=int, default=82)
     args = parser.parse_args(argv)
